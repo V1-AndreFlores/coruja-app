@@ -1,0 +1,26 @@
+import { PropsWithChildren } from 'react';
+import { StyleProp, Text, TextStyle } from 'react-native';
+
+import { useAppTheme } from '@/presentation/theme/AppThemeProvider';
+
+type AppTextProps = PropsWithChildren<{
+  style?: StyleProp<TextStyle>;
+  secondary?: boolean;
+}>;
+
+export function AppText({ children, style, secondary = false }: AppTextProps) {
+  const { colors } = useAppTheme();
+
+  return (
+    <Text
+      style={[
+        {
+          color: secondary ? colors.textSecondary : colors.text,
+        },
+        style,
+      ]}
+    >
+      {children}
+    </Text>
+  );
+}
