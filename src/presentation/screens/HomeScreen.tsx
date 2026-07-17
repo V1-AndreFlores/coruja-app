@@ -77,7 +77,7 @@ export function HomeScreen() {
   };
 
   return (
-    <AppScreen contentStyle={styles.container} scroll>
+    <AppScreen bottomSpacing={96} contentStyle={styles.container} scroll>
       <AppHeader />
       <AppPageTitle
         description="Encontre informações completas e descubra onde assistir no Brasil."
@@ -106,7 +106,6 @@ export function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     gap: 22,
-    paddingBottom: 96,
   },
   featureList: {
     gap: 12,

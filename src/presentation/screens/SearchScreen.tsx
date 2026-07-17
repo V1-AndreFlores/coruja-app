@@ -70,7 +70,7 @@ export function SearchScreen() {
   };
 
   return (
-    <AppScreen contentStyle={styles.container} scroll>
+    <AppScreen bottomSpacing={96} contentStyle={styles.container} scroll>
       <AppHeader compact />
       <AppPageTitle
         description="Pesquise por títulos de filmes e séries."
@@ -85,7 +85,6 @@ export function SearchScreen() {
 const styles = StyleSheet.create({
   container: {
     gap: 20,
-    paddingBottom: 96,
   },
   results: {
     gap: 12,

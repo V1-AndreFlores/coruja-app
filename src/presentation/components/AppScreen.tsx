@@ -11,11 +11,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/presentation/theme/AppThemeProvider';
 
 type AppScreenProps = PropsWithChildren<{
+  bottomSpacing?: number;
   contentStyle?: StyleProp<ViewStyle>;
   scroll?: boolean;
 }>;
 
 export function AppScreen({
+  bottomSpacing = 0,
   children,
   contentStyle,
   scroll = false,
@@ -34,6 +36,12 @@ export function AppScreen({
           showsVerticalScrollIndicator={false}
         >
           {children}
+          {bottomSpacing > 0 ? (
+            <View
+              pointerEvents="none"
+              style={[styles.bottomSpacer, { height: bottomSpacing }]}
+            />
+          ) : null}
         </ScrollView>
       ) : (
         <View style={[styles.content, contentStyle]}>{children}</View>
@@ -45,6 +53,9 @@ export function AppScreen({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+  },
+  bottomSpacer: {
+    flexShrink: 0,
   },
   content: {
     flex: 1,
