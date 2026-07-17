@@ -1,6 +1,7 @@
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { CatalogItemSummary } from '@/domain/models/CatalogItemSummary';
+import { openTitleDetails } from '@/presentation/navigation/titleRoutes';
 import { useAppTheme } from '@/presentation/theme/AppThemeProvider';
 
 import { AppText } from './AppText';
@@ -23,10 +24,17 @@ export function CatalogSearchResultCard({ item }: CatalogSearchResultCardProps) 
     .join(' · ');
 
   return (
-    <View
-      style={[
+    <Pressable
+      accessibilityLabel={`Abrir detalhes de ${item.title}`}
+      accessibilityRole="button"
+      onPress={() => openTitleDetails(item)}
+      style={({ pressed }) => [
         styles.container,
-        { backgroundColor: colors.surface, borderColor: colors.border },
+        {
+          backgroundColor: colors.surface,
+          borderColor: colors.border,
+          opacity: pressed ? 0.72 : 1,
+        },
       ]}
     >
       <View style={styles.posterContainer}>
@@ -50,7 +58,7 @@ export function CatalogSearchResultCard({ item }: CatalogSearchResultCardProps) 
           {item.overview || 'Sinopse ainda não disponível em português.'}
         </AppText>
       </View>
-    </View>
+    </Pressable>
   );
 }
 

@@ -16,7 +16,16 @@ export type AppIconName =
   | 'info'
   | 'arrow-right'
   | 'empty'
-  | 'error';
+  | 'error'
+  | 'back'
+  | 'play'
+  | 'share'
+  | 'external'
+  | 'calendar'
+  | 'clock'
+  | 'star'
+  | 'person'
+  | 'check';
 
 const ICONS: Record<AppIconName, SymbolViewProps['name']> = {
   home: { ios: 'house.fill', android: 'home', web: 'home' },
@@ -42,6 +51,15 @@ const ICONS: Record<AppIconName, SymbolViewProps['name']> = {
     android: 'error',
     web: 'error',
   },
+  back: { ios: 'chevron.left', android: 'arrow_back', web: 'arrow_back' },
+  play: { ios: 'play.fill', android: 'play_arrow', web: 'play_arrow' },
+  share: { ios: 'square.and.arrow.up', android: 'share', web: 'share' },
+  external: { ios: 'arrow.up.right.square', android: 'open_in_new', web: 'open_in_new' },
+  calendar: { ios: 'calendar', android: 'calendar_month', web: 'calendar_month' },
+  clock: { ios: 'clock.fill', android: 'schedule', web: 'schedule' },
+  star: { ios: 'star.fill', android: 'star', web: 'star' },
+  person: { ios: 'person.fill', android: 'person', web: 'person' },
+  check: { ios: 'checkmark', android: 'check', web: 'check' },
 };
 
 type AppIconProps = {

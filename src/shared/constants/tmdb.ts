@@ -4,8 +4,12 @@ export const TMDB = {
   language: 'pt-BR',
   region: 'BR',
   posterSize: 'w342',
+  backdropSize: 'w1280',
+  profileSize: 'w185',
+  providerLogoSize: 'w92',
   searchDebounceMs: 500,
   requestTimeoutMs: 12_000,
   catalogCacheTtlMs: 10 * 60 * 1000,
   searchCacheTtlMs: 5 * 60 * 1000,
+  detailsCacheTtlMs: 30 * 60 * 1000,
 } as const;

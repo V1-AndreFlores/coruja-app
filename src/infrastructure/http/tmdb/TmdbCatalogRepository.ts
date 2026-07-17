@@ -3,12 +3,25 @@ import type {
   CatalogItemSummary,
   MediaType,
 } from '@/domain/models/CatalogItemSummary';
+import type { TitleDetails } from '@/domain/models/TitleDetails';
 import { MemoryCache } from '@/infrastructure/cache/MemoryCache';
 import { TMDB } from '@/shared/constants/tmdb';
 
 import { TmdbClient } from './TmdbClient';
-import type { TmdbCatalogItemDto, TmdbPagedResponse } from './TmdbDtos';
-import { mapTmdbCatalogItem } from './TmdbMappers';
+import type {
+  TmdbCatalogItemDto,
+  TmdbCreditsDto,
+  TmdbMovieDetailsDto,
+  TmdbPagedResponse,
+  TmdbTvDetailsDto,
+  TmdbVideosDto,
+  TmdbWatchProvidersDto,
+} from './TmdbDtos';
+import {
+  mapMovieDetails,
+  mapTmdbCatalogItem,
+  mapTvDetails,
+} from './TmdbMappers';
 
 export class TmdbCatalogRepository implements CatalogRepository {
   constructor(
@@ -68,6 +81,82 @@ export class TmdbCatalogRepository implements CatalogRepository {
       TMDB.searchCacheTtlMs,
       signal,
     );
+  }
+
+  async getTitleDetails(
+    mediaType: MediaType,
+    id: number,
+    signal?: AbortSignal,
+  ): Promise<TitleDetails> {
+    const cacheKey = `details:${mediaType}:${id}`;
+    const cached = this.cache.get<TitleDetails>(cacheKey);
+
+    if (cached) {
+      return cached;
+    }
+
+    const details =
+      mediaType === 'movie'
+        ? await this.getMovieDetails(id, signal)
+        : await this.getTvDetails(id, signal);
+
+    this.cache.set(cacheKey, details, TMDB.detailsCacheTtlMs);
+    return details;
+  }
+
+  private async getMovieDetails(
+    id: number,
+    signal?: AbortSignal,
+  ): Promise<TitleDetails> {
+    const [details, videos, providers] = await Promise.all([
+      this.client.get<TmdbMovieDetailsDto>(
+        `/movie/${id}`,
+        {
+          language: TMDB.language,
+          append_to_response: 'credits,release_dates',
+        },
+        signal,
+      ),
+      this.client.get<TmdbVideosDto>(`/movie/${id}/videos`, {}, signal),
+      this.client.get<TmdbWatchProvidersDto>(
+        `/movie/${id}/watch/providers`,
+        {},
+        signal,
+      ),
+    ]);
+
+    details.videos = videos;
+    return mapMovieDetails(details, providers);
+  }
+
+  private async getTvDetails(
+    id: number,
+    signal?: AbortSignal,
+  ): Promise<TitleDetails> {
+    const [details, aggregateCredits, videos, providers] = await Promise.all([
+      this.client.get<TmdbTvDetailsDto>(
+        `/tv/${id}`,
+        {
+          language: TMDB.language,
+          append_to_response: 'content_ratings',
+        },
+        signal,
+      ),
+      this.client.get<TmdbCreditsDto>(
+        `/tv/${id}/aggregate_credits`,
+        { language: TMDB.language },
+        signal,
+      ),
+      this.client.get<TmdbVideosDto>(`/tv/${id}/videos`, {}, signal),
+      this.client.get<TmdbWatchProvidersDto>(
+        `/tv/${id}/watch/providers`,
+        {},
+        signal,
+      ),
+    ]);
+
+    details.videos = videos;
+    return mapTvDetails(details, aggregateCredits, providers);
   }
 
   private async getCatalogPage(

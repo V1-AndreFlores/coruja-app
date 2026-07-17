@@ -22,6 +22,12 @@ A aplicação contém:
 - navegação por abas: Início, Buscar, Quero assistir, Favoritos e Ajustes;
 - tema escuro como padrão e persistência da seleção de tema;
 - integração direta com o TMDB para tendências, filmes populares, séries populares e busca;
+- tela de detalhes para filmes e séries, aberta ao tocar nos cards;
+- sinopse, duração, gêneros, classificação indicativa, equipe principal e elenco;
+- trailer externo no YouTube e disponibilidade no Brasil por assinatura, aluguel e compra;
+- temporadas e quantidade de episódios para séries;
+- ações locais de Favorito e Quero assistir, além de compartilhamento;
+- registro local do histórico de títulos visualizados;
 - idioma `pt-BR` e região padrão `BR`;
 - autenticação por API Read Access Token ou API Key;
 - timeout, cancelamento, debounce de pesquisa e cache em memória;
@@ -60,7 +66,7 @@ Infrastructure
     └── AsyncStorage repositories
 ```
 
-A camada de apresentação não conhece os contratos HTTP do TMDB. Se um backend for necessário futuramente, a implementação do repositório poderá ser substituída sem reescrever as telas.
+A camada de apresentação não conhece os contratos HTTP do TMDB. Se um backend for necessário futuramente, a implementação do repositório poderá ser substituída sem reescrever as telas. Os detalhes usam cache em memória e cancelamento de requisições ao sair da rota.
 
 ## Pré-requisitos
 
@@ -134,13 +140,19 @@ npm run web
 Início | Buscar | Quero assistir | Favoritos | Ajustes
 ```
 
+Os cards de Início e Buscar abrem a rota dinâmica:
+
+```text
+/title/{movie|tv}/{id}
+```
+
 ## Persistência local
 
-As preferências de tema são persistidas com AsyncStorage. A mesma infraestrutura contém contratos para:
+As preferências de tema são persistidas com AsyncStorage. A biblioteca local armazena:
 
 - favoritos;
 - lista Quero assistir;
-- histórico de visualizações.
+- histórico de visualizações, limitado aos 100 títulos mais recentes.
 
 Nenhum desses dados exige login e permanece somente no aparelho.
 
@@ -186,10 +198,10 @@ https://github.com/V1-AndreFlores/coruja-app
 
 ## Próximas etapas
 
-1. criar a tela de detalhes de filmes e séries;
-2. integrar elenco, duração, gêneros, trailers e classificação indicativa;
-3. integrar onde assistir no Brasil;
-4. ativar favoritos, Quero assistir e histórico nas telas;
+1. listar e permitir remover itens nas telas Favoritos e Quero assistir;
+2. criar a tela de histórico e controles para limpeza local;
+3. adicionar filtros avançados de pesquisa;
+4. finalizar Sobre, Créditos e Política de Privacidade;
 5. incluir o logotipo oficial aprovado do TMDB na área de créditos;
-6. implementar testes automatizados;
-7. preparar política de privacidade e publicação.
+6. implementar testes automatizados dos mapeadores e repositórios;
+7. validar o fluxo completo em Android e preparar a publicação.

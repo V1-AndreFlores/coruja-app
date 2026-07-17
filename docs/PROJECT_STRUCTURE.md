@@ -18,9 +18,9 @@ O projeto utiliza Clean Architecture adaptada para React Native. As dependência
 ## Fluxo do catálogo
 
 ```text
-HomeScreen / SearchScreen
+HomeScreen / SearchScreen / TitleDetailsScreen
         ↓
-useHomeCatalog / useCatalogSearch
+useHomeCatalog / useCatalogSearch / useTitleDetails
         ↓
 CatalogRepository
         ↓
@@ -31,7 +31,7 @@ TmdbClient
 TMDB API
 ```
 
-As telas não dependem dos DTOs do TMDB. O mapeamento para `CatalogItemSummary` acontece na infraestrutura.
+As telas não dependem dos DTOs do TMDB. O mapeamento para `CatalogItemSummary` e `TitleDetails` acontece na infraestrutura.
 
 ## Estrutura atual
 
@@ -44,6 +44,7 @@ coruja-app/
 ├── src/
 │   ├── app/
 │   │   ├── (tabs)/
+│   │   ├── title/[mediaType]/[id].tsx
 │   │   ├── _layout.tsx
 │   │   ├── +not-found.tsx
 │   │   ├── home.tsx
@@ -56,7 +57,8 @@ coruja-app/
 │   ├── domain/
 │   │   └── models/
 │   │       ├── AppThemeMode.ts
-│   │       └── CatalogItemSummary.ts
+│   │       ├── CatalogItemSummary.ts
+│   │       └── TitleDetails.ts
 │   ├── infrastructure/
 │   │   ├── cache/
 │   │   │   └── MemoryCache.ts
@@ -73,7 +75,8 @@ coruja-app/
 │   │   ├── components/
 │   │   ├── hooks/
 │   │   │   ├── useCatalogSearch.ts
-│   │   │   └── useHomeCatalog.ts
+│   │   │   ├── useHomeCatalog.ts
+│   │   │   └── useTitleDetails.ts
 │   │   ├── screens/
 │   │   └── theme/
 │   └── shared/
@@ -129,7 +132,16 @@ GET /trending/all/day
 GET /movie/popular
 GET /tv/popular
 GET /search/multi
+GET /movie/{id}
+GET /movie/{id}/videos
+GET /movie/{id}/watch/providers
+GET /tv/{id}
+GET /tv/{id}/aggregate_credits
+GET /tv/{id}/videos
+GET /tv/{id}/watch/providers
 ```
+
+Os detalhes de filme usam `append_to_response=credits,release_dates`; os detalhes de série usam `append_to_response=content_ratings`. Vídeos são consultados sem filtro de idioma para aumentar a chance de localizar um trailer oficial.
 
 As consultas usam `pt-BR`; filmes populares usam também a região `BR`.
 
@@ -141,7 +153,7 @@ Os cards constroem as URLs de pôster usando:
 https://image.tmdb.org/t/p/w342{poster_path}
 ```
 
-Quando não há pôster, a interface exibe um placeholder local.
+Quando não há pôster, capa, foto de integrante ou logotipo de provedor, a interface exibe um placeholder local ou omite o ativo.
 
 ## Tema
 
@@ -188,18 +200,21 @@ O tema escuro é o padrão inicial. A preferência é carregada antes da saída 
 4. Não existe backend próprio nesta etapa.
 5. A integração externa fica encapsulada em repositórios.
 6. O cliente HTTP não expõe DTOs do TMDB à apresentação.
-7. O cache é apenas em memória e não substitui persistência de biblioteca local.
+7. O cache é apenas em memória e não substitui persistência de biblioteca local. Detalhes possuem TTL de 30 minutos.
 8. A pesquisa exige ao menos dois caracteres.
 9. Resultados do tipo pessoa são descartados nesta etapa.
 10. O logotipo oficial do TMDB deverá ser incluído antes da publicação.
 11. O `versionCode` deve ser conferido na Play Console antes do AAB.
+12. O elenco principal é limitado a 10 integrantes e séries usam créditos agregados.
+13. Trailers e links de disponibilidade são abertos externamente.
+14. Os dados de provedores exibem atribuição explícita à JustWatch.
 
 ## Próximas etapas técnicas
 
-1. criar rota e tela de detalhes;
-2. integrar detalhes, créditos, vídeos e classificação indicativa;
-3. integrar provedores de streaming do Brasil;
-4. ativar favoritos, Quero assistir e histórico;
-5. adicionar o logotipo aprovado do TMDB;
-6. implementar testes unitários dos mapeadores e repositórios;
+1. carregar e remover itens nas telas Favoritos e Quero assistir;
+2. expor e limpar o histórico local;
+3. adicionar filtros de pesquisa;
+4. adicionar o logotipo aprovado do TMDB;
+5. implementar testes unitários dos mapeadores e repositórios;
+6. validar responsividade e navegação em Android;
 7. preparar privacidade, EAS e publicação.

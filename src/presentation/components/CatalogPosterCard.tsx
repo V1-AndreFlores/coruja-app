@@ -1,6 +1,7 @@
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import type { CatalogItemSummary } from '@/domain/models/CatalogItemSummary';
+import { openTitleDetails } from '@/presentation/navigation/titleRoutes';
 import { useAppTheme } from '@/presentation/theme/AppThemeProvider';
 
 import { AppText } from './AppText';
@@ -23,7 +24,12 @@ export function CatalogPosterCard({ item }: CatalogPosterCardProps) {
     .join(' · ');
 
   return (
-    <View style={styles.container}>
+    <Pressable
+      accessibilityLabel={`Abrir detalhes de ${item.title}`}
+      accessibilityRole="button"
+      onPress={() => openTitleDetails(item)}
+      style={({ pressed }) => [styles.container, { opacity: pressed ? 0.72 : 1 }]}
+    >
       <View
         style={[
           styles.posterContainer,
@@ -47,7 +53,7 @@ export function CatalogPosterCard({ item }: CatalogPosterCardProps) {
           <AppText style={[styles.rating, { color: colors.primary }]}>★ {item.voteAverage.toFixed(1)}</AppText>
         ) : null}
       </View>
-    </View>
+    </Pressable>
   );
 }
 
