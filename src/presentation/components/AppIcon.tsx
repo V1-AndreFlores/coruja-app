@@ -25,7 +25,8 @@ export type AppIconName =
   | 'clock'
   | 'star'
   | 'person'
-  | 'check';
+  | 'check'
+  | 'remove';
 
 const ICONS: Record<AppIconName, SymbolViewProps['name']> = {
   home: { ios: 'house.fill', android: 'home', web: 'home' },
@@ -60,6 +61,7 @@ const ICONS: Record<AppIconName, SymbolViewProps['name']> = {
   star: { ios: 'star.fill', android: 'star', web: 'star' },
   person: { ios: 'person.fill', android: 'person', web: 'person' },
   check: { ios: 'checkmark', android: 'check', web: 'check' },
+  remove: { ios: 'trash.fill', android: 'delete', web: 'delete' },
 };
 
 type AppIconProps = {

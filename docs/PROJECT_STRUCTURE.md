@@ -76,6 +76,7 @@ coruja-app/
 │   │   ├── hooks/
 │   │   │   ├── useCatalogSearch.ts
 │   │   │   ├── useHomeCatalog.ts
+│   │   │   ├── useLocalLibraryList.ts
 │   │   │   └── useTitleDetails.ts
 │   │   ├── screens/
 │   │   └── theme/
@@ -192,6 +193,22 @@ O tema escuro é o padrão inicial. A preferência é carregada antes da saída 
 - `AsyncStorageJsonStore`: serialização JSON e tratamento centralizado;
 - implementações `AsyncStorage*`: adaptadores concretos.
 
+### Fluxo das listas locais
+
+```text
+FavoritesScreen / WatchlistScreen
+        ↓
+LocalLibraryScreen
+        ↓
+useLocalLibraryList
+        ↓
+LocalLibraryRepository
+        ↓
+AsyncStorageLocalLibraryRepository
+```
+
+As listas são carregadas novamente sempre que a aba recebe foco. Cada coleção mantém sua própria chave de armazenamento; remover de Favoritos não altera Quero assistir e vice-versa. Novas inclusões são inseridas no início, preservando a ordem mais recente primeiro.
+
 ## Decisões técnicas
 
 1. O pacote Android permanece `br.app.andreflores.coruja`.
@@ -208,13 +225,14 @@ O tema escuro é o padrão inicial. A preferência é carregada antes da saída 
 12. O elenco principal é limitado a 10 integrantes e séries usam créditos agregados.
 13. Trailers e links de disponibilidade são abertos externamente.
 14. Os dados de provedores exibem atribuição explícita à JustWatch.
+15. Favoritos e Quero assistir usam uma tela genérica de biblioteca local, grade responsiva e confirmação antes da remoção.
+16. O retorno da tela de detalhes recarrega automaticamente a coleção focada.
 
 ## Próximas etapas técnicas
 
-1. carregar e remover itens nas telas Favoritos e Quero assistir;
-2. expor e limpar o histórico local;
-3. adicionar filtros de pesquisa;
-4. adicionar o logotipo aprovado do TMDB;
-5. implementar testes unitários dos mapeadores e repositórios;
-6. validar responsividade e navegação em Android;
-7. preparar privacidade, EAS e publicação.
+1. expor e limpar o histórico local;
+2. adicionar filtros de pesquisa;
+3. adicionar o logotipo aprovado do TMDB;
+4. implementar testes unitários dos mapeadores e repositórios;
+5. validar responsividade e navegação em Android;
+6. preparar privacidade, EAS e publicação.
