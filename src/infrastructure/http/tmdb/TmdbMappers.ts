@@ -77,6 +77,7 @@ export function mapTmdbCatalogItem(
     overview: source.overview?.trim() || null,
     voteAverage:
       typeof source.vote_average === 'number' ? source.vote_average : null,
+    genreIds: source.genre_ids ?? [],
   };
 }
 

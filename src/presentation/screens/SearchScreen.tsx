@@ -1,18 +1,113 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import {
+  DEFAULT_SEARCH_FILTERS,
+  type SearchFilters,
+} from '@/domain/models/SearchFilters';
+import { ActiveSearchFilters } from '@/presentation/components/ActiveSearchFilters';
 import { AppHeader } from '@/presentation/components/AppHeader';
 import { AppPageTitle } from '@/presentation/components/AppPageTitle';
 import { AppScreen } from '@/presentation/components/AppScreen';
 import { AppSearchInput } from '@/presentation/components/AppSearchInput';
 import { AppStateView } from '@/presentation/components/AppStateView';
+import { AppText } from '@/presentation/components/AppText';
 import { CatalogSearchResultCard } from '@/presentation/components/CatalogSearchResultCard';
+import { SearchFiltersButton } from '@/presentation/components/SearchFiltersButton';
+import { SearchFiltersModal } from '@/presentation/components/SearchFiltersModal';
 import { useCatalogSearch } from '@/presentation/hooks/useCatalogSearch';
+import { useWatchProviderOptions } from '@/presentation/hooks/useWatchProviderOptions';
+import { useAppTheme } from '@/presentation/theme/AppThemeProvider';
+
+let sessionFilters: SearchFilters = DEFAULT_SEARCH_FILTERS;
+
+function countActiveFilters(filters: SearchFilters): number {
+  return [
+    filters.mediaType !== 'all',
+    Boolean(filters.genre),
+    Boolean(filters.yearFrom || filters.yearTo),
+    Boolean(filters.minimumRating),
+    Boolean(filters.providerKey),
+    filters.availability !== 'any',
+  ].filter(Boolean).length;
+}
 
 export function SearchScreen() {
+  const { colors } = useAppTheme();
   const [query, setQuery] = useState('');
-  const { items, status, errorMessage, hasValidQuery, retry } =
-    useCatalogSearch(query);
+  const [filters, setFilters] = useState<SearchFilters>(() => sessionFilters);
+  const [filtersVisible, setFiltersVisible] = useState(false);
+  const {
+    items,
+    matchedPersonName,
+    status,
+    errorMessage,
+    hasValidQuery,
+    retry,
+  } = useCatalogSearch(query, filters);
+  const { options: providers, status: providersStatus } =
+    useWatchProviderOptions(filtersVisible || Boolean(filters.providerKey));
+
+  const activeFilterCount = useMemo(
+    () => countActiveFilters(filters),
+    [filters],
+  );
+
+  useEffect(() => {
+    sessionFilters = filters;
+  }, [filters]);
+
+  useEffect(() => {
+    if (!matchedPersonName || !filters.providerKey) {
+      return;
+    }
+
+    setFilters((current) => ({
+      ...current,
+      providerKey: undefined,
+      availability: 'any',
+    }));
+  }, [filters.providerKey, matchedPersonName]);
+
+  const applyFilters = (nextFilters: SearchFilters) => {
+    setFilters(nextFilters);
+    setFiltersVisible(false);
+  };
+
+  const removeFilter = (
+    key:
+      | 'mediaType'
+      | 'genre'
+      | 'yearFrom'
+      | 'yearTo'
+      | 'minimumRating'
+      | 'providerKey'
+      | 'availability',
+  ) => {
+    setFilters((current) => {
+      switch (key) {
+        case 'mediaType':
+          return { ...current, mediaType: 'all' };
+        case 'genre':
+          return { ...current, genre: undefined };
+        case 'yearFrom':
+        case 'yearTo':
+          return { ...current, yearFrom: undefined, yearTo: undefined };
+        case 'minimumRating':
+          return { ...current, minimumRating: undefined };
+        case 'providerKey':
+          return {
+            ...current,
+            providerKey: undefined,
+            availability: 'any',
+          };
+        case 'availability':
+          return { ...current, availability: 'any' };
+        default:
+          return current;
+      }
+    });
+  };
 
   const renderContent = () => {
     if (!hasValidQuery) {
@@ -50,7 +145,11 @@ export function SearchScreen() {
     if (status === 'success' && items.length === 0) {
       return (
         <AppStateView
-          description={`Nenhum filme ou série foi encontrado para “${query.trim()}”.`}
+          description={
+            activeFilterCount > 0
+              ? `Nenhum resultado para “${query.trim()}” com os filtros selecionados.`
+              : `Nenhum filme ou série foi encontrado para “${query.trim()}”.`
+          }
           title="Nenhum resultado"
           variant="empty"
         />
@@ -58,33 +157,94 @@ export function SearchScreen() {
     }
 
     return (
-      <View style={styles.results}>
-        {items.map((item) => (
-          <CatalogSearchResultCard
-            item={item}
-            key={`${item.mediaType}:${item.id}`}
-          />
-        ))}
+      <View style={styles.resultsSection}>
+        {matchedPersonName ? (
+          <View
+            style={[
+              styles.professionalNotice,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
+            <AppText secondary style={styles.professionalNoticeText}>
+              Exibindo filmes e séries relacionados a {matchedPersonName}. O
+              filtro de plataforma não é aplicado em buscas por profissional.
+            </AppText>
+          </View>
+        ) : null}
+        <AppText secondary style={styles.resultCount}>
+          {items.length} {items.length === 1 ? 'resultado' : 'resultados'}
+        </AppText>
+        <View style={styles.results}>
+          {items.map((item) => (
+            <CatalogSearchResultCard
+              item={item}
+              key={`${item.mediaType}:${item.id}`}
+            />
+          ))}
+        </View>
       </View>
     );
   };
 
   return (
-    <AppScreen bottomSpacing={96} contentStyle={styles.container} scroll>
-      <AppHeader compact />
-      <AppPageTitle
-        description="Pesquise por parte do título ou pelo nome de profissionais do cinema e da televisão."
-        title="Buscar"
+    <>
+      <AppScreen bottomSpacing={96} contentStyle={styles.container} scroll>
+        <AppHeader compact />
+        <AppPageTitle
+          description="Pesquise por parte do título ou pelo nome de profissionais do cinema e da televisão."
+          title="Buscar"
+        />
+        <View style={styles.searchControls}>
+          <AppSearchInput onChangeText={setQuery} value={query} />
+          <SearchFiltersButton
+            activeCount={activeFilterCount}
+            onPress={() => setFiltersVisible(true)}
+          />
+          <ActiveSearchFilters
+            filters={filters}
+            onRemove={removeFilter}
+            providers={providers}
+          />
+        </View>
+        {renderContent()}
+      </AppScreen>
+
+      <SearchFiltersModal
+        onApply={applyFilters}
+        onClose={() => setFiltersVisible(false)}
+        platformDisabled={Boolean(matchedPersonName)}
+        providers={providers}
+        providersStatus={providersStatus}
+        value={filters}
+        visible={filtersVisible}
       />
-      <AppSearchInput onChangeText={setQuery} value={query} />
-      {renderContent()}
-    </AppScreen>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     gap: 20,
+  },
+  searchControls: {
+    gap: 12,
+  },
+  resultsSection: {
+    gap: 12,
+  },
+  professionalNotice: {
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  professionalNoticeText: {
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  resultCount: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   results: {
     gap: 12,

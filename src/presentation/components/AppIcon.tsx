@@ -26,7 +26,8 @@ export type AppIconName =
   | 'star'
   | 'person'
   | 'check'
-  | 'remove';
+  | 'remove'
+  | 'filter';
 
 const ICONS: Record<AppIconName, SymbolViewProps['name']> = {
   home: { ios: 'house.fill', android: 'home', web: 'home' },
@@ -62,6 +63,11 @@ const ICONS: Record<AppIconName, SymbolViewProps['name']> = {
   person: { ios: 'person.fill', android: 'person', web: 'person' },
   check: { ios: 'checkmark', android: 'check', web: 'check' },
   remove: { ios: 'trash.fill', android: 'delete', web: 'delete' },
+  filter: {
+    ios: 'line.3.horizontal.decrease.circle',
+    android: 'filter_list',
+    web: 'filter_list',
+  },
 };
 
 type AppIconProps = {

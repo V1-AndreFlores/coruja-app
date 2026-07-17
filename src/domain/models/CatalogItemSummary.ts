@@ -9,6 +9,7 @@ export type CatalogItemSummary = {
   releaseYear?: number | null;
   overview?: string | null;
   voteAverage?: number | null;
+  genreIds?: number[];
 };
 
 export type HistoryEntry = CatalogItemSummary & {

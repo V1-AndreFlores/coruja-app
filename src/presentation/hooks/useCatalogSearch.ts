@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import type { CatalogItemSummary } from '@/domain/models/CatalogItemSummary';
+import type { SearchFilters } from '@/domain/models/SearchFilters';
 import { catalogRepository } from '@/infrastructure/http/tmdb/repositories';
 import { toCatalogErrorMessage } from '@/infrastructure/http/tmdb/TmdbErrors';
 import { TMDB } from '@/shared/constants/tmdb';
 
 type SearchStatus = 'idle' | 'loading' | 'success' | 'error';
 
-export function useCatalogSearch(query: string) {
+export function useCatalogSearch(query: string, filters: SearchFilters) {
   const normalizedQuery = query.trim();
   const [items, setItems] = useState<CatalogItemSummary[]>([]);
+  const [matchedPersonName, setMatchedPersonName] = useState<string>();
   const [status, setStatus] = useState<SearchStatus>('idle');
   const [errorMessage, setErrorMessage] = useState<string>();
   const [reloadKey, setReloadKey] = useState(0);
@@ -17,20 +19,23 @@ export function useCatalogSearch(query: string) {
   useEffect(() => {
     if (normalizedQuery.length < 2) {
       setItems([]);
+      setMatchedPersonName(undefined);
       setStatus('idle');
       setErrorMessage(undefined);
       return;
     }
 
     const controller = new AbortController();
-    const debounceId = setTimeout(() => {
-      setStatus('loading');
-      setErrorMessage(undefined);
+    setStatus('loading');
+    setMatchedPersonName(undefined);
+    setErrorMessage(undefined);
 
+    const debounceId = setTimeout(() => {
       void catalogRepository
-        .search(normalizedQuery, controller.signal)
-        .then((results) => {
-          setItems(results);
+        .search(normalizedQuery, filters, controller.signal)
+        .then((response) => {
+          setItems(response.items);
+          setMatchedPersonName(response.matchedPersonName);
           setStatus('success');
         })
         .catch((error: unknown) => {
@@ -39,6 +44,7 @@ export function useCatalogSearch(query: string) {
           }
 
           setItems([]);
+          setMatchedPersonName(undefined);
           setStatus('error');
           setErrorMessage(toCatalogErrorMessage(error));
         });
@@ -48,7 +54,7 @@ export function useCatalogSearch(query: string) {
       clearTimeout(debounceId);
       controller.abort();
     };
-  }, [normalizedQuery, reloadKey]);
+  }, [filters, normalizedQuery, reloadKey]);
 
   const retry = useCallback(() => {
     setReloadKey((current) => current + 1);
@@ -56,6 +62,7 @@ export function useCatalogSearch(query: string) {
 
   return {
     items,
+    matchedPersonName,
     status,
     errorMessage,
     hasValidQuery: normalizedQuery.length >= 2,

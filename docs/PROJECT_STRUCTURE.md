@@ -127,6 +127,9 @@ Apenas uma credencial é necessária. O token Bearer tem prioridade quando ambos
 - cancelamento com `AbortController`;
 - debounce de 500 ms na pesquisa;
 - busca simultânea por título e por nome de profissional;
+- filtros locais por tipo, gênero, período e avaliação mínima;
+- consulta de plataformas disponíveis no Brasil somente quando o usuário seleciona esse filtro;
+- etiquetas removíveis para filtros ativos e estado mantido durante a sessão;
 - consulta dos créditos combinados da pessoa mais relevante;
 - exclusão de resultados adultos;
 - remoção de duplicidades entre resultados diretos e créditos;
@@ -143,6 +146,8 @@ GET /tv/popular
 GET /search/multi
 GET /search/person
 GET /person/{id}/combined_credits
+GET /watch/providers/movie
+GET /watch/providers/tv
 GET /movie/{id}
 GET /movie/{id}/videos
 GET /movie/{id}/watch/providers
@@ -155,6 +160,8 @@ GET /tv/{id}/watch/providers
 Os detalhes de filme usam `append_to_response=credits,release_dates`; os detalhes de série usam `append_to_response=content_ratings`. Vídeos são consultados sem filtro de idioma para aumentar a chance de localizar um trailer oficial.
 
 As consultas usam `pt-BR`; filmes populares usam também a região `BR`. Na busca, `/search/multi` fornece os resultados diretos por título e `/search/person` identifica a pessoa mais relevante. Quando encontrada, `/person/{id}/combined_credits` retorna os trabalhos de elenco e equipe técnica. A apresentação recebe somente filmes e séries.
+
+Tipo, gênero, intervalo de lançamento e avaliação mínima são aplicados sobre os resultados mapeados. As opções de streaming são obtidas das listas de provedores de filmes e séries para a região `BR`. Quando uma plataforma é selecionada em uma busca por título, a disponibilidade é verificada nos endpoints de cada resultado e armazenada em cache. Esse filtro é desabilitado em buscas identificadas como nome de profissional para impedir uma multiplicação excessiva de requisições sobre os créditos combinados.
 
 ## Imagens
 
@@ -281,11 +288,15 @@ A tela consulta as quantidades de Favoritos, Quero assistir e histórico. Cada c
 22. O gerenciamento de dados permite limpeza seletiva ou completa de Favoritos, Quero assistir e histórico, preservando o tema.
 23. Falhas de escrita e remoção no AsyncStorage são propagadas para que a interface possa informar o erro.
 24. A área Sobre concentra créditos, contato e privacidade; a tela Ajustes funciona como índice de navegação.
+25. Os filtros de busca priorizam simplicidade: um tipo, um gênero, um período, uma nota mínima e uma plataforma por vez.
+26. Os filtros permanecem apenas durante a sessão e não são gravados no AsyncStorage.
+27. A verificação por plataforma é feita somente em buscas por título e usa cache por `mediaType:id`.
+28. Em buscas por profissional, plataforma e disponibilidade são removidas para limitar chamadas ao TMDB.
 
 ## Próximas etapas técnicas
 
-1. adicionar filtros de pesquisa;
-2. adicionar o logotipo aprovado do TMDB;
-3. implementar testes unitários dos mapeadores e repositórios;
-4. validar responsividade e navegação em Android;
+1. adicionar o logotipo aprovado do TMDB;
+2. implementar testes unitários dos mapeadores e repositórios;
+3. validar responsividade e navegação em Android;
+4. revisar acessibilidade, estados offline e desempenho;
 5. revisar privacidade, EAS e publicação.

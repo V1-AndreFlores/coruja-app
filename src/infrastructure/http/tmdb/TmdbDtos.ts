@@ -14,6 +14,7 @@ export type TmdbCatalogItemDto = {
   vote_count?: number | null;
   popularity?: number | null;
   adult?: boolean;
+  genre_ids?: number[];
 };
 
 
@@ -117,6 +118,10 @@ export type TmdbWatchProviderDto = {
   provider_name: string;
   logo_path?: string | null;
   display_priority?: number;
+};
+
+export type TmdbWatchProviderListDto = {
+  results: TmdbWatchProviderDto[];
 };
 
 export type TmdbWatchProvidersDto = {

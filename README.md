@@ -36,6 +36,9 @@ A aplicação contém:
 - autenticação por API Read Access Token ou API Key;
 - busca por título ou pelo nome de atores, atrizes, diretores e demais profissionais, retornando somente filmes e séries;
 - resultados encontrados diretamente pelo título aparecem antes dos créditos da pessoa mais relevante;
+- filtros simples por tipo, gênero, período de lançamento, avaliação mínima e plataforma no Brasil;
+- filtros ativos exibidos como etiquetas removíveis e mantidos durante a navegação da sessão;
+- filtro de plataforma desabilitado em buscas identificadas como nome de profissional, evitando consultas excessivas;
 - créditos de elenco e equipe técnica são unificados, sem duplicidade, e limitados aos 20 trabalhos mais relevantes;
 - timeout, cancelamento, debounce de pesquisa e cache em memória;
 - componentes reutilizáveis para catálogo, busca e estados de tela;
@@ -150,6 +153,8 @@ Início | Buscar | Quero assistir | Favoritos | Ajustes
 
 Na Busca, o termo é consultado simultaneamente como título e como nome de profissional. A interface exibe somente filmes e séries; quando uma pessoa é localizada, seus créditos combinados de elenco e equipe técnica são incorporados após os resultados diretos de título.
 
+O painel de filtros mantém a experiência objetiva: permite selecionar tipo, um gênero, intervalo de anos, avaliação mínima e uma plataforma disponível no Brasil. A disponibilidade pode ser refinada por assinatura, aluguel ou compra. Os filtros ativos aparecem abaixo do campo de pesquisa e podem ser removidos individualmente. Em buscas identificadas como nome de profissional, o filtro de plataforma é removido e desabilitado para evitar uma consulta de disponibilidade para cada crédito associado.
+
 Os cards de Início e Buscar abrem a rota dinâmica:
 
 ```text
@@ -221,8 +226,8 @@ https://github.com/V1-AndreFlores/coruja-app
 
 ## Próximas etapas
 
-1. adicionar filtros avançados de pesquisa;
-2. incluir o logotipo oficial aprovado do TMDB na área de créditos;
-3. implementar testes automatizados dos mapeadores e repositórios;
-4. validar o fluxo completo em Android;
+1. incluir o logotipo oficial aprovado do TMDB na área de créditos;
+2. implementar testes automatizados dos mapeadores e repositórios;
+3. validar o fluxo completo em Android;
+4. revisar acessibilidade, estados offline e desempenho;
 5. revisar a política de privacidade publicada e preparar o AAB.
