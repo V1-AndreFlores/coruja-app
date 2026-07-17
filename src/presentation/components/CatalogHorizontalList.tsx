@@ -1,4 +1,4 @@
-import { FlatList, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import type { CatalogItemSummary } from '@/domain/models/CatalogItemSummary';
 
@@ -10,18 +10,27 @@ type CatalogHorizontalListProps = {
 
 export function CatalogHorizontalList({ items }: CatalogHorizontalListProps) {
   return (
-    <FlatList
+    <ScrollView
       contentContainerStyle={styles.content}
-      data={items}
+      directionalLockEnabled={false}
       horizontal
-      keyExtractor={(item) => `${item.mediaType}:${item.id}`}
-      renderItem={({ item }) => <CatalogPosterCard item={item} />}
+      nestedScrollEnabled
       showsHorizontalScrollIndicator={false}
-    />
+      style={styles.scrollView}
+    >
+      {items.map((item) => (
+        <View key={`${item.mediaType}:${item.id}`}>
+          <CatalogPosterCard item={item} />
+        </View>
+      ))}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flexGrow: 0,
+  },
   content: {
     gap: 12,
     paddingRight: 20,

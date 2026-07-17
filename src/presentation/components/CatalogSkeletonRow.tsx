@@ -10,8 +10,11 @@ export function CatalogSkeletonRow() {
   return (
     <ScrollView
       contentContainerStyle={styles.content}
+      directionalLockEnabled={false}
       horizontal
+      nestedScrollEnabled
       showsHorizontalScrollIndicator={false}
+      style={styles.scrollView}
     >
       {[0, 1, 2].map((item) => (
         <View key={item} style={styles.item}>
@@ -27,6 +30,9 @@ export function CatalogSkeletonRow() {
 }
 
 const styles = StyleSheet.create({
+  scrollView: {
+    flexGrow: 0,
+  },
   content: {
     gap: 14,
     paddingRight: 20,

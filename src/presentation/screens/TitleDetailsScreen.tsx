@@ -299,8 +299,11 @@ export function TitleDetailsScreen({
             />
             <ScrollView
               contentContainerStyle={styles.horizontalContent}
+              directionalLockEnabled={false}
               horizontal
+              nestedScrollEnabled
               showsHorizontalScrollIndicator={false}
+              style={styles.horizontalScrollView}
             >
               {details.keyPeople.map((person) => (
                 <PersonCard
@@ -319,8 +322,11 @@ export function TitleDetailsScreen({
             <AppSectionHeader title="Elenco principal" />
             <ScrollView
               contentContainerStyle={styles.horizontalContent}
+              directionalLockEnabled={false}
               horizontal
+              nestedScrollEnabled
               showsHorizontalScrollIndicator={false}
+              style={styles.horizontalScrollView}
             >
               {details.cast.map((person) => (
                 <PersonCard
@@ -437,8 +443,11 @@ export function TitleDetailsScreen({
             </AppText>
             <ScrollView
               contentContainerStyle={styles.horizontalContent}
+              directionalLockEnabled={false}
               horizontal
+              nestedScrollEnabled
               showsHorizontalScrollIndicator={false}
+              style={styles.horizontalScrollView}
             >
               {details.seasons.map((season) => (
                 <SeasonCard key={season.id} season={season} />
@@ -600,6 +609,9 @@ const styles = StyleSheet.create({
   overview: {
     fontSize: 15,
     lineHeight: 24,
+  },
+  horizontalScrollView: {
+    flexGrow: 0,
   },
   horizontalContent: {
     gap: 12,

@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { AppHeader } from '@/presentation/components/AppHeader';
@@ -65,7 +66,11 @@ export function HomeScreen() {
           <CatalogHorizontalList items={trending} />
         </View>
         <View style={styles.section}>
-          <AppSectionHeader title="Filmes populares" />
+          <AppSectionHeader
+            actionLabel="Buscar"
+            onActionPress={() => router.push('/(tabs)/buscar')}
+            title="Filmes populares"
+          />
           <CatalogHorizontalList items={popularMovies} />
         </View>
         <View style={styles.section}>
@@ -102,7 +107,12 @@ export function HomeScreen() {
             isCompactLayout && styles.informationGridCompact,
           ]}
         >
-          <View style={styles.informationItem}>
+          <View
+            style={[
+              styles.informationItem,
+              isCompactLayout && styles.informationItemCompact,
+            ]}
+          >
             <View style={[styles.iconContainer, { backgroundColor: colors.card }]}>
               <AppIcon color={colors.primary} name="movie" size={22} />
             </View>
@@ -122,7 +132,12 @@ export function HomeScreen() {
             ]}
           />
 
-          <View style={styles.informationItem}>
+          <View
+            style={[
+              styles.informationItem,
+              isCompactLayout && styles.informationItemCompact,
+            ]}
+          >
             <View style={[styles.iconContainer, { backgroundColor: colors.card }]}>
               <AppIcon color={colors.primary} name="streaming" size={22} />
             </View>
@@ -164,13 +179,20 @@ const styles = StyleSheet.create({
   },
   informationGridCompact: {
     flexDirection: 'column',
-    gap: 16,
+    gap: 12,
   },
   informationItem: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: 13,
+  },
+  informationItemCompact: {
+    width: '100%',
+    flexGrow: 0,
+    flexShrink: 0,
+    flexBasis: 'auto',
+    alignSelf: 'stretch',
   },
   iconContainer: {
     width: 42,
@@ -181,6 +203,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   informationContent: {
+    minWidth: 0,
     flex: 1,
     gap: 5,
   },
@@ -196,6 +219,7 @@ const styles = StyleSheet.create({
     width: 1,
   },
   horizontalDivider: {
+    width: '100%',
     height: 1,
   },
   section: {
