@@ -10,6 +10,8 @@ type SettingsLinkRowProps = {
   title: string;
   description?: string;
   onPress?: () => void;
+  disabled?: boolean;
+  tone?: 'default' | 'danger';
 };
 
 export function SettingsLinkRow({
@@ -17,21 +19,37 @@ export function SettingsLinkRow({
   title,
   description,
   onPress,
+  disabled = false,
+  tone = 'default',
 }: SettingsLinkRowProps) {
   const { colors } = useAppTheme();
+  const isInteractive = Boolean(onPress) && !disabled;
+  const accentColor = colors.primary;
 
   return (
     <Pressable
       accessibilityRole={onPress ? 'button' : undefined}
-      disabled={!onPress}
+      accessibilityState={onPress ? { disabled } : undefined}
+      disabled={!isInteractive}
       onPress={onPress}
-      style={({ pressed }) => [styles.container, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.container,
+        disabled && styles.disabled,
+        pressed && styles.pressed,
+      ]}
     >
       <View style={[styles.iconContainer, { backgroundColor: colors.card }]}>
-        <AppIcon color={colors.primary} name={icon} size={22} />
+        <AppIcon color={accentColor} name={icon} size={22} />
       </View>
       <View style={styles.content}>
-        <AppText style={styles.title}>{title}</AppText>
+        <AppText
+          style={[
+            styles.title,
+            tone === 'danger' && { color: colors.primary },
+          ]}
+        >
+          {title}
+        </AppText>
         {description ? (
           <AppText secondary style={styles.description}>
             {description}
@@ -54,6 +72,9 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.65,
+  },
+  disabled: {
+    opacity: 0.48,
   },
   iconContainer: {
     width: 42,

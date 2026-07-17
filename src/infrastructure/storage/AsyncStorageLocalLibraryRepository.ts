@@ -45,6 +45,10 @@ export class AsyncStorageLocalLibraryRepository
     );
   }
 
+  clearFavorites(): Promise<void> {
+    return this.store.remove(STORAGE_KEYS.favorites);
+  }
+
   getWatchlist(): Promise<CatalogItemSummary[]> {
     return this.store.read<CatalogItemSummary[]>(STORAGE_KEYS.watchlist, []);
   }
@@ -58,6 +62,10 @@ export class AsyncStorageLocalLibraryRepository
       STORAGE_KEYS.watchlist,
       updateSelection(currentItems, item, selected),
     );
+  }
+
+  clearWatchlist(): Promise<void> {
+    return this.store.remove(STORAGE_KEYS.watchlist);
   }
 
   getHistory(): Promise<HistoryEntry[]> {
@@ -92,5 +100,13 @@ export class AsyncStorageLocalLibraryRepository
 
   clearHistory(): Promise<void> {
     return this.store.remove(STORAGE_KEYS.history);
+  }
+
+  async clearAllLibraryData(): Promise<void> {
+    await Promise.all([
+      this.clearFavorites(),
+      this.clearWatchlist(),
+      this.clearHistory(),
+    ]);
   }
 }

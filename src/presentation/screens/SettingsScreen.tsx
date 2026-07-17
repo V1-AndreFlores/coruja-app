@@ -1,4 +1,3 @@
-import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { StyleSheet, View } from 'react-native';
@@ -15,10 +14,8 @@ const PRIVACY_POLICY_URL =
   'https://v1-andreflores.github.io/politica-de-privacidade/coruja/';
 
 export function SettingsScreen() {
-  const appVersion = Constants.expoConfig?.version ?? '2.0.0';
-
   return (
-    <AppScreen contentStyle={styles.container} scroll>
+    <AppScreen bottomSpacing={96} contentStyle={styles.container} scroll>
       <AppHeader compact />
       <AppPageTitle
         description="Preferências, dados locais e informações do aplicativo."
@@ -44,32 +41,26 @@ export function SettingsScreen() {
           onPress={() => router.push('/history')}
           title="Histórico de visualizações"
         />
-      </SettingsCard>
-
-      <SettingsCard title="Fontes de dados">
         <SettingsLinkRow
-          description="This product uses the TMDB API but is not endorsed or certified by TMDB."
-          icon="movie"
-          title="The Movie Database (TMDB)"
-        />
-        <SettingsLinkRow
-          description="A disponibilidade de streaming será fornecida pelo TMDB em parceria com a JustWatch."
-          icon="streaming"
-          title="Onde assistir"
+          description="Consulte quantidades e limpe Favoritos, Quero assistir ou histórico."
+          icon="database"
+          onPress={() => router.push('/data-management')}
+          title="Gerenciar dados locais"
         />
       </SettingsCard>
 
-      <SettingsCard title="Privacidade e aplicativo">
+      <SettingsCard title="Sobre e privacidade">
         <SettingsLinkRow
-          description="Consulte como o Coruja tratará dados e integrações."
+          description="Versão, desenvolvimento, fontes de dados, TMDB e JustWatch."
+          icon="info"
+          onPress={() => router.push('/about')}
+          title="Sobre o Coruja e créditos"
+        />
+        <SettingsLinkRow
+          description="Consulte como o Coruja trata dados locais e integrações."
           icon="privacy"
           onPress={() => void Linking.openURL(PRIVACY_POLICY_URL)}
           title="Política de privacidade"
-        />
-        <SettingsLinkRow
-          description={`Versão ${appVersion}`}
-          icon="info"
-          title="Coruja — Sobre filmes e séries"
         />
       </SettingsCard>
 

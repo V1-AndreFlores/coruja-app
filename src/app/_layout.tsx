@@ -20,6 +20,8 @@ function AppNavigation() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="home" />
         <Stack.Screen name="history" />
+        <Stack.Screen name="about" />
+        <Stack.Screen name="data-management" />
         <Stack.Screen name="title/[mediaType]/[id]" />
         <Stack.Screen name="+not-found" />
       </Stack>

@@ -40,7 +40,8 @@ A aplicação contém:
 - timeout, cancelamento, debounce de pesquisa e cache em memória;
 - componentes reutilizáveis para catálogo, busca e estados de tela;
 - persistência local preparada para favoritos, Quero assistir e histórico;
-- atribuições textuais iniciais ao TMDB e à JustWatch;
+- área Sobre o Coruja com versão, desenvolvimento, créditos ao TMDB, atribuição à JustWatch, contato e política de privacidade;
+- gerenciamento de dados locais com contadores e limpeza seletiva ou completa de Favoritos, Quero assistir e histórico;
 - configuração inicial do EAS Build;
 - documentação de arquitetura e estrutura de pastas.
 
@@ -165,7 +166,9 @@ As preferências de tema são persistidas com AsyncStorage. A biblioteca local a
 
 Favoritos e Quero assistir são coleções independentes. Os itens mais recentes ficam no início, as telas recarregam quando voltam ao foco e a remoção direta exige confirmação.
 
-O histórico é acessado em `Ajustes > Histórico de visualizações`, mantém até 100 títulos e registra data e hora. Ao abrir novamente o mesmo título, o registro existente é atualizado e movido para o início, sem duplicidade. É possível remover um item ou limpar todo o histórico sem afetar Favoritos e Quero assistir. Nenhum desses dados exige login e tudo permanece somente no aparelho.
+O histórico é acessado em `Ajustes > Histórico de visualizações`, mantém até 100 títulos e registra data e hora. Ao abrir novamente o mesmo título, o registro existente é atualizado e movido para o início, sem duplicidade. É possível remover um item ou limpar todo o histórico sem afetar Favoritos e Quero assistir.
+
+A área `Ajustes > Gerenciar dados locais` apresenta as quantidades armazenadas e permite limpar Favoritos, Quero assistir, histórico ou as três coleções em uma única operação. A preferência de tema é preservada. Nenhum desses dados exige login e tudo permanece somente no aparelho.
 
 ## Builds EAS
 
@@ -185,9 +188,18 @@ npx eas build -p android --profile production
 
 Antes do primeiro AAB, deve ser confirmado o maior `versionCode` da Play Console e concluída a redefinição da chave de upload.
 
-## Atribuições
+## Sobre, créditos e privacidade
 
-O aplicativo deverá manter, na seção Sobre/Créditos, o aviso obrigatório do TMDB e um logotipo oficial aprovado. Os dados de onde assistir exigem atribuição à JustWatch.
+A área `Ajustes > Sobre o Coruja e créditos` reúne:
+
+- versão instalada e identificação do aplicativo;
+- identificação e contato do desenvolvedor;
+- aviso obrigatório do TMDB;
+- atribuição da disponibilidade de streaming à JustWatch;
+- links oficiais das fontes de dados;
+- acesso à política de privacidade e ao gerenciamento dos dados locais.
+
+O logotipo oficial aprovado do TMDB ainda deverá ser incluído antes da publicação final.
 
 ## Estrutura e decisões técnicas
 
@@ -210,7 +222,7 @@ https://github.com/V1-AndreFlores/coruja-app
 ## Próximas etapas
 
 1. adicionar filtros avançados de pesquisa;
-2. finalizar Sobre, Créditos e Política de Privacidade;
-3. incluir o logotipo oficial aprovado do TMDB na área de créditos;
-4. implementar testes automatizados dos mapeadores e repositórios;
-5. validar o fluxo completo em Android e preparar a publicação.
+2. incluir o logotipo oficial aprovado do TMDB na área de créditos;
+3. implementar testes automatizados dos mapeadores e repositórios;
+4. validar o fluxo completo em Android;
+5. revisar a política de privacidade publicada e preparar o AAB.

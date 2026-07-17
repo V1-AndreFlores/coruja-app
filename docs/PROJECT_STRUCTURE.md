@@ -46,6 +46,8 @@ coruja-app/
 │   │   ├── (tabs)/
 │   │   ├── title/[mediaType]/[id].tsx
 │   │   ├── history.tsx
+│   │   ├── about.tsx
+│   │   ├── data-management.tsx
 │   │   ├── _layout.tsx
 │   │   ├── +not-found.tsx
 │   │   ├── home.tsx
@@ -78,6 +80,7 @@ coruja-app/
 │   │   │   ├── useCatalogSearch.ts
 │   │   │   ├── useHomeCatalog.ts
 │   │   │   ├── useHistory.ts
+│   │   │   ├── useLocalDataManagement.ts
 │   │   │   ├── useLocalLibraryList.ts
 │   │   │   └── useTitleDetails.ts
 │   │   ├── screens/
@@ -232,6 +235,26 @@ AsyncStorageLocalLibraryRepository
 
 O histórico é limitado aos 100 títulos mais recentes. A chave composta `mediaType:id` evita duplicidade; uma nova visualização atualiza o horário e move o título para o início. A tela recarrega ao receber foco, permite abertura dos detalhes, remoção individual e limpeza total com confirmação. Essas operações não afetam Favoritos nem Quero assistir.
 
+### Fluxo de gerenciamento dos dados locais
+
+```text
+SettingsScreen
+        ↓
+DataManagementScreen
+        ↓
+useLocalDataManagement
+        ↓
+LocalLibraryRepository
+        ↓
+AsyncStorageLocalLibraryRepository
+```
+
+A tela consulta as quantidades de Favoritos, Quero assistir e histórico. Cada coleção pode ser limpa separadamente ou em conjunto. Todas as operações destrutivas exigem confirmação, atualizam os contadores imediatamente e preservam a preferência de tema.
+
+## Sobre, créditos e privacidade
+
+`AboutScreen` concentra versão, desenvolvedor, contato, links oficiais, aviso obrigatório do TMDB, atribuição à JustWatch e acesso à política de privacidade. A tela de Ajustes mantém apenas os atalhos principais, evitando duplicação de informações. O logotipo oficial aprovado do TMDB permanece como requisito antes da publicação final.
+
 ## Decisões técnicas
 
 1. O pacote Android permanece `br.app.andreflores.coruja`.
@@ -255,6 +278,9 @@ O histórico é limitado aos 100 títulos mais recentes. A chave composta `media
 19. O retorno da tela de detalhes recarrega automaticamente a coleção focada.
 20. O histórico é acessado pelos Ajustes, limitado a 100 itens e não mantém duplicidades.
 21. A remoção individual e a limpeza total do histórico exigem confirmação e não alteram outras listas locais.
+22. O gerenciamento de dados permite limpeza seletiva ou completa de Favoritos, Quero assistir e histórico, preservando o tema.
+23. Falhas de escrita e remoção no AsyncStorage são propagadas para que a interface possa informar o erro.
+24. A área Sobre concentra créditos, contato e privacidade; a tela Ajustes funciona como índice de navegação.
 
 ## Próximas etapas técnicas
 
@@ -262,4 +288,4 @@ O histórico é limitado aos 100 títulos mais recentes. A chave composta `media
 2. adicionar o logotipo aprovado do TMDB;
 3. implementar testes unitários dos mapeadores e repositórios;
 4. validar responsividade e navegação em Android;
-5. preparar privacidade, EAS e publicação.
+5. revisar privacidade, EAS e publicação.

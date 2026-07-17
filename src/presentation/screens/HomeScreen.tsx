@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { AppHeader } from '@/presentation/components/AppHeader';
@@ -66,11 +65,7 @@ export function HomeScreen() {
           <CatalogHorizontalList items={trending} />
         </View>
         <View style={styles.section}>
-          <AppSectionHeader
-            actionLabel="Buscar"
-            onActionPress={() => router.push('/(tabs)/buscar')}
-            title="Filmes populares"
-          />
+          <AppSectionHeader title="Filmes populares" />
           <CatalogHorizontalList items={popularMovies} />
         </View>
         <View style={styles.section}>

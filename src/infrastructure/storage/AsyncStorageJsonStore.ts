@@ -21,6 +21,7 @@ export class AsyncStorageJsonStore {
       await AsyncStorage.setItem(key, JSON.stringify(value));
     } catch (error) {
       console.warn(`[Coruja] Não foi possível persistir a chave local "${key}".`, error);
+      throw error;
     }
   }
 
@@ -29,6 +30,7 @@ export class AsyncStorageJsonStore {
       await AsyncStorage.removeItem(key);
     } catch (error) {
       console.warn(`[Coruja] Não foi possível remover a chave local "${key}".`, error);
+      throw error;
     }
   }
 }
