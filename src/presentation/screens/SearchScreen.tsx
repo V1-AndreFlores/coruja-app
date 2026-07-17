@@ -18,7 +18,7 @@ export function SearchScreen() {
     if (!hasValidQuery) {
       return (
         <AppStateView
-          description="Digite ao menos dois caracteres para pesquisar filmes e séries."
+          description="Digite ao menos dois caracteres para buscar filmes e séries por título ou profissional."
           title="O que você quer assistir?"
           variant="empty"
         />
@@ -73,7 +73,7 @@ export function SearchScreen() {
     <AppScreen bottomSpacing={96} contentStyle={styles.container} scroll>
       <AppHeader compact />
       <AppPageTitle
-        description="Pesquise por títulos de filmes e séries."
+        description="Pesquise por parte do título ou pelo nome de profissionais do cinema e da televisão."
         title="Buscar"
       />
       <AppSearchInput onChangeText={setQuery} value={query} />

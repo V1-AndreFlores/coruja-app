@@ -123,7 +123,10 @@ Apenas uma credencial é necessária. O token Bearer tem prioridade quando ambos
 - timeout de 12 segundos;
 - cancelamento com `AbortController`;
 - debounce de 500 ms na pesquisa;
+- busca simultânea por título e por nome de profissional;
+- consulta dos créditos combinados da pessoa mais relevante;
 - exclusão de resultados adultos;
+- remoção de duplicidades entre resultados diretos e créditos;
 - cache em memória para catálogo e busca;
 - tratamento específico para HTTP 401 e 429;
 - mensagens de erro adequadas para configuração, autenticação, rede e timeout.
@@ -135,6 +138,8 @@ GET /trending/all/day
 GET /movie/popular
 GET /tv/popular
 GET /search/multi
+GET /search/person
+GET /person/{id}/combined_credits
 GET /movie/{id}
 GET /movie/{id}/videos
 GET /movie/{id}/watch/providers
@@ -146,7 +151,7 @@ GET /tv/{id}/watch/providers
 
 Os detalhes de filme usam `append_to_response=credits,release_dates`; os detalhes de série usam `append_to_response=content_ratings`. Vídeos são consultados sem filtro de idioma para aumentar a chance de localizar um trailer oficial.
 
-As consultas usam `pt-BR`; filmes populares usam também a região `BR`.
+As consultas usam `pt-BR`; filmes populares usam também a região `BR`. Na busca, `/search/multi` fornece os resultados diretos por título e `/search/person` identifica a pessoa mais relevante. Quando encontrada, `/person/{id}/combined_credits` retorna os trabalhos de elenco e equipe técnica. A apresentação recebe somente filmes e séries.
 
 ## Imagens
 
@@ -237,16 +242,19 @@ O histórico é limitado aos 100 títulos mais recentes. A chave composta `media
 6. O cliente HTTP não expõe DTOs do TMDB à apresentação.
 7. O cache é apenas em memória e não substitui persistência de biblioteca local. Detalhes possuem TTL de 30 minutos.
 8. A pesquisa exige ao menos dois caracteres.
-9. Resultados do tipo pessoa são descartados nesta etapa.
-10. O logotipo oficial do TMDB deverá ser incluído antes da publicação.
-11. O `versionCode` deve ser conferido na Play Console antes do AAB.
-12. O elenco principal é limitado a 10 integrantes e séries usam créditos agregados.
-13. Trailers e links de disponibilidade são abertos externamente.
-14. Os dados de provedores exibem atribuição explícita à JustWatch.
-15. Favoritos e Quero assistir usam uma tela genérica de biblioteca local, grade responsiva e confirmação antes da remoção.
-16. O retorno da tela de detalhes recarrega automaticamente a coleção focada.
-17. O histórico é acessado pelos Ajustes, limitado a 100 itens e não mantém duplicidades.
-18. A remoção individual e a limpeza total do histórico exigem confirmação e não alteram outras listas locais.
+9. Pessoas não são exibidas como resultados e não possuem tela de perfil.
+10. A busca considera a pessoa mais relevante retornada pelo TMDB e incorpora seus créditos combinados de elenco e equipe técnica.
+11. Resultados diretos por título aparecem primeiro; títulos duplicados são removidos pela chave `mediaType:id`.
+12. Os trabalhos associados à pessoa são ordenados por relevância e limitados aos 20 primeiros.
+13. O logotipo oficial do TMDB deverá ser incluído antes da publicação.
+14. O `versionCode` deve ser conferido na Play Console antes do AAB.
+15. O elenco principal é limitado a 10 integrantes e séries usam créditos agregados.
+16. Trailers e links de disponibilidade são abertos externamente.
+17. Os dados de provedores exibem atribuição explícita à JustWatch.
+18. Favoritos e Quero assistir usam uma tela genérica de biblioteca local, grade responsiva e confirmação antes da remoção.
+19. O retorno da tela de detalhes recarrega automaticamente a coleção focada.
+20. O histórico é acessado pelos Ajustes, limitado a 100 itens e não mantém duplicidades.
+21. A remoção individual e a limpeza total do histórico exigem confirmação e não alteram outras listas locais.
 
 ## Próximas etapas técnicas
 

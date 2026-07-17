@@ -11,7 +11,30 @@ export type TmdbCatalogItemDto = {
   backdrop_path?: string | null;
   overview?: string | null;
   vote_average?: number | null;
+  vote_count?: number | null;
+  popularity?: number | null;
   adult?: boolean;
+};
+
+
+export type TmdbPersonSearchResultDto = {
+  id: number;
+  name: string;
+  popularity?: number | null;
+  known_for_department?: string | null;
+};
+
+export type TmdbPersonCreditDto = TmdbCatalogItemDto & {
+  media_type: TmdbMediaType;
+  credit_id?: string;
+  character?: string | null;
+  job?: string | null;
+  department?: string | null;
+};
+
+export type TmdbCombinedCreditsDto = {
+  cast: TmdbPersonCreditDto[];
+  crew: TmdbPersonCreditDto[];
 };
 
 export type TmdbPagedResponse<T> = {

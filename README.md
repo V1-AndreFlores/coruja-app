@@ -6,7 +6,7 @@ Este repositório representa a reconstrução do aplicativo Coruja. A nova vers�
 
 ## Objetivos
 
-- oferecer pesquisa unificada de filmes e séries;
+- oferecer pesquisa de filmes e séries por parte do título ou pelo nome de profissionais;
 - exibir sinopse, duração, gêneros, elenco, equipe e trailers;
 - informar onde assistir no Brasil, diferenciando assinatura, aluguel e compra;
 - manter favoritos, lista “Quero assistir” e histórico local;
@@ -21,7 +21,7 @@ A aplicação contém:
 - Splash nativa e tela de Splash com duração mínima de três segundos;
 - navegação por abas: Início, Buscar, Quero assistir, Favoritos e Ajustes;
 - tema escuro como padrão e persistência da seleção de tema;
-- integração direta com o TMDB para tendências, filmes populares, séries populares e busca;
+- integração direta com o TMDB para tendências, filmes populares, séries populares e busca por título ou profissional;
 - tela de detalhes para filmes e séries, aberta ao tocar nos cards;
 - sinopse, duração, gêneros, classificação indicativa, equipe principal e elenco;
 - trailer externo no YouTube e disponibilidade no Brasil por assinatura, aluguel e compra;
@@ -34,6 +34,9 @@ A aplicação contém:
 - limite de 100 títulos no histórico, sem duplicidade e com o mais recente no início;
 - idioma `pt-BR` e região padrão `BR`;
 - autenticação por API Read Access Token ou API Key;
+- busca por título ou pelo nome de atores, atrizes, diretores e demais profissionais, retornando somente filmes e séries;
+- resultados encontrados diretamente pelo título aparecem antes dos créditos da pessoa mais relevante;
+- créditos de elenco e equipe técnica são unificados, sem duplicidade, e limitados aos 20 trabalhos mais relevantes;
 - timeout, cancelamento, debounce de pesquisa e cache em memória;
 - componentes reutilizáveis para catálogo, busca e estados de tela;
 - persistência local preparada para favoritos, Quero assistir e histórico;
@@ -143,6 +146,8 @@ npm run web
 ```text
 Início | Buscar | Quero assistir | Favoritos | Ajustes
 ```
+
+Na Busca, o termo é consultado simultaneamente como título e como nome de profissional. A interface exibe somente filmes e séries; quando uma pessoa é localizada, seus créditos combinados de elenco e equipe técnica são incorporados após os resultados diretos de título.
 
 Os cards de Início e Buscar abrem a rota dinâmica:
 

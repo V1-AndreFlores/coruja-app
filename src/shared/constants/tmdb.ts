@@ -11,5 +11,6 @@ export const TMDB = {
   requestTimeoutMs: 12_000,
   catalogCacheTtlMs: 10 * 60 * 1000,
   searchCacheTtlMs: 5 * 60 * 1000,
+  personCreditsLimit: 20,
   detailsCacheTtlMs: 30 * 60 * 1000,
 } as const;

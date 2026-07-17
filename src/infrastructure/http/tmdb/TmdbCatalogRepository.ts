@@ -10,9 +10,11 @@ import { TMDB } from '@/shared/constants/tmdb';
 import { TmdbClient } from './TmdbClient';
 import type {
   TmdbCatalogItemDto,
+  TmdbCombinedCreditsDto,
   TmdbCreditsDto,
   TmdbMovieDetailsDto,
   TmdbPagedResponse,
+  TmdbPersonSearchResultDto,
   TmdbTvDetailsDto,
   TmdbVideosDto,
   TmdbWatchProvidersDto,
@@ -20,6 +22,7 @@ import type {
 import {
   mapMovieDetails,
   mapTmdbCatalogItem,
+  mapTmdbPersonCredits,
   mapTvDetails,
 } from './TmdbMappers';
 
@@ -62,25 +65,55 @@ export class TmdbCatalogRepository implements CatalogRepository {
     );
   }
 
-  search(
+  async search(
     query: string,
     signal?: AbortSignal,
   ): Promise<CatalogItemSummary[]> {
     const normalizedQuery = query.trim();
+    const cacheKey = `search:${normalizedQuery.toLocaleLowerCase('pt-BR')}`;
+    const cached = this.cache.get<CatalogItemSummary[]>(cacheKey);
 
-    return this.getCatalogPage(
-      `search:${normalizedQuery.toLocaleLowerCase('pt-BR')}`,
-      '/search/multi',
-      {
-        query: normalizedQuery,
-        include_adult: false,
-        language: TMDB.language,
-        page: 1,
-      },
-      undefined,
-      TMDB.searchCacheTtlMs,
-      signal,
+    if (cached) {
+      return cached;
+    }
+
+    const searchParams = {
+      query: normalizedQuery,
+      include_adult: false,
+      language: TMDB.language,
+      page: 1,
+    };
+
+    const [titleResponse, personResponse] = await Promise.all([
+      this.client.get<TmdbPagedResponse<TmdbCatalogItemDto>>(
+        '/search/multi',
+        searchParams,
+        signal,
+      ),
+      this.client.get<TmdbPagedResponse<TmdbPersonSearchResultDto>>(
+        '/search/person',
+        searchParams,
+        signal,
+      ),
+    ]);
+
+    const directTitleResults = titleResponse.results
+      .filter((item) => item.adult !== true)
+      .map((item) => mapTmdbCatalogItem(item))
+      .filter((item): item is CatalogItemSummary => item !== null);
+
+    const mostRelevantPerson = personResponse.results[0];
+    const personTitleResults = mostRelevantPerson
+      ? await this.getPersonCredits(mostRelevantPerson.id, signal)
+      : [];
+
+    const mergedResults = this.mergeUniqueCatalogItems(
+      directTitleResults,
+      personTitleResults,
     );
+
+    this.cache.set(cacheKey, mergedResults, TMDB.searchCacheTtlMs);
+    return mergedResults;
   }
 
   async getTitleDetails(
@@ -157,6 +190,36 @@ export class TmdbCatalogRepository implements CatalogRepository {
 
     details.videos = videos;
     return mapTvDetails(details, aggregateCredits, providers);
+  }
+
+  private async getPersonCredits(
+    personId: number,
+    signal?: AbortSignal,
+  ): Promise<CatalogItemSummary[]> {
+    const response = await this.client.get<TmdbCombinedCreditsDto>(
+      `/person/${personId}/combined_credits`,
+      { language: TMDB.language },
+      signal,
+    );
+
+    return mapTmdbPersonCredits(response, TMDB.personCreditsLimit);
+  }
+
+  private mergeUniqueCatalogItems(
+    directTitleResults: CatalogItemSummary[],
+    personTitleResults: CatalogItemSummary[],
+  ): CatalogItemSummary[] {
+    const uniqueItems = new Map<string, CatalogItemSummary>();
+
+    [...directTitleResults, ...personTitleResults].forEach((item) => {
+      const key = `${item.mediaType}:${item.id}`;
+
+      if (!uniqueItems.has(key)) {
+        uniqueItems.set(key, item);
+      }
+    });
+
+    return [...uniqueItems.values()];
   }
 
   private async getCatalogPage(

@@ -14,6 +14,7 @@ import { TMDB } from '@/shared/constants/tmdb';
 
 import type {
   TmdbCatalogItemDto,
+  TmdbCombinedCreditsDto,
   TmdbCastDto,
   TmdbCreditsDto,
   TmdbCrewDto,
@@ -77,6 +78,76 @@ export function mapTmdbCatalogItem(
     voteAverage:
       typeof source.vote_average === 'number' ? source.vote_average : null,
   };
+}
+
+function getCreditReleaseTimestamp(source: TmdbCatalogItemDto): number {
+  const value =
+    source.media_type === 'movie'
+      ? source.release_date
+      : source.first_air_date;
+
+  if (!value) {
+    return 0;
+  }
+
+  const timestamp = Date.parse(value);
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+}
+
+function comparePersonCredits(
+  left: TmdbCatalogItemDto,
+  right: TmdbCatalogItemDto,
+): number {
+  const popularityDifference =
+    (right.popularity ?? 0) - (left.popularity ?? 0);
+
+  if (popularityDifference !== 0) {
+    return popularityDifference;
+  }
+
+  const voteCountDifference =
+    (right.vote_count ?? 0) - (left.vote_count ?? 0);
+
+  if (voteCountDifference !== 0) {
+    return voteCountDifference;
+  }
+
+  const voteAverageDifference =
+    (right.vote_average ?? 0) - (left.vote_average ?? 0);
+
+  if (voteAverageDifference !== 0) {
+    return voteAverageDifference;
+  }
+
+  return getCreditReleaseTimestamp(right) - getCreditReleaseTimestamp(left);
+}
+
+export function mapTmdbPersonCredits(
+  source: TmdbCombinedCreditsDto,
+  limit: number,
+): CatalogItemSummary[] {
+  const uniqueCredits = new Map<string, TmdbCatalogItemDto>();
+
+  [...source.cast, ...source.crew]
+    .filter(
+      (credit) =>
+        credit.adult !== true &&
+        (credit.media_type === 'movie' || credit.media_type === 'tv'),
+    )
+    .forEach((credit) => {
+      const key = `${credit.media_type}:${credit.id}`;
+      const current = uniqueCredits.get(key);
+
+      if (!current || comparePersonCredits(credit, current) < 0) {
+        uniqueCredits.set(key, credit);
+      }
+    });
+
+  return [...uniqueCredits.values()]
+    .sort(comparePersonCredits)
+    .map((credit) => mapTmdbCatalogItem(credit))
+    .filter((item): item is CatalogItemSummary => item !== null)
+    .slice(0, limit);
 }
 
 function mapCast(source: TmdbCastDto[]): CastMember[] {

@@ -25,7 +25,7 @@ export function AppSearchInput({ value, onChangeText }: AppSearchInputProps) {
         autoCapitalize="none"
         autoCorrect={false}
         onChangeText={onChangeText}
-        placeholder="Filme, série, ator ou atriz"
+        placeholder="Título, ator, atriz, diretor ou outro profissional"
         placeholderTextColor={colors.textSecondary}
         returnKeyType="search"
         style={[styles.input, { color: colors.text }]}
