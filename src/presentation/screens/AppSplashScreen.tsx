@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -8,9 +8,12 @@ import {
   View,
 } from 'react-native';
 
+import { useAppTheme } from '@/presentation/theme/AppThemeProvider';
 import { SPLASH_MINIMUM_DURATION_MS } from '@/shared/constants/timing';
 
 export function AppSplashScreen() {
+  const { isHydrated } = useAppTheme();
+  const [minimumDurationElapsed, setMinimumDurationElapsed] = useState(false);
   const opacity = useRef(new Animated.Value(0)).current;
   const scale = useRef(new Animated.Value(0.96)).current;
 
@@ -32,7 +35,7 @@ export function AppSplashScreen() {
     animation.start();
 
     const timeoutId = setTimeout(() => {
-      router.replace('/home');
+      setMinimumDurationElapsed(true);
     }, SPLASH_MINIMUM_DURATION_MS);
 
     return () => {
@@ -40,6 +43,12 @@ export function AppSplashScreen() {
       clearTimeout(timeoutId);
     };
   }, [opacity, scale]);
+
+  useEffect(() => {
+    if (minimumDurationElapsed && isHydrated) {
+      router.replace('/(tabs)/inicio');
+    }
+  }, [isHydrated, minimumDurationElapsed]);
 
   return (
     <View style={styles.container}>

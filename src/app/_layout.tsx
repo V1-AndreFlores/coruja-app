@@ -15,7 +15,12 @@ function AppNavigation() {
           contentStyle: { backgroundColor: colors.background },
           headerShown: false,
         }}
-      />
+      >
+        <Stack.Screen name="index" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="home" />
+        <Stack.Screen name="+not-found" />
+      </Stack>
     </>
   );
 }

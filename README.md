@@ -13,16 +13,18 @@ Este repositório representa a reconstrução do aplicativo Coruja. A nova vers�
 - disponibilizar temas claro e escuro;
 - adotar arquitetura sustentável, tipagem estrita e dependências atualizadas.
 
-## Escopo inicial
+## Estado atual
 
-A primeira entrega contém:
+A base visual e estrutural contém:
 
-- projeto Expo com TypeScript e Expo Router;
-- identidade visual inicial;
-- ativos para ícone Android, ícone adaptativo, favicon e Splash;
-- Splash nativa e tela de Splash animada;
-- tokens de cores para temas claro e escuro;
-- tela inicial de validação da estrutura;
+- Splash nativa e tela de Splash com duração mínima de três segundos;
+- navegação principal por abas: Início, Buscar, Quero assistir, Favoritos e Ajustes;
+- tema escuro como padrão inicial;
+- seleção e persistência dos temas claro e escuro;
+- componentes reutilizáveis para cabeçalho, títulos, cartões, busca e estados de tela;
+- telas iniciais sem dependência de API externa;
+- estados reutilizáveis de carregamento, vazio e erro;
+- contratos e repositórios locais preparados para favoritos, lista Quero assistir e histórico;
 - configuração inicial do EAS Build;
 - documentação da arquitetura e da estrutura de pastas.
 
@@ -33,6 +35,8 @@ A primeira entrega contém:
 - React 19;
 - TypeScript 6;
 - Expo Router;
+- Expo Symbols;
+- AsyncStorage;
 - EAS Build.
 
 O backend previsto será desenvolvido em ASP.NET Core Web API para proteger chaves externas, centralizar cache, resiliência, rate limiting e observabilidade.
@@ -47,13 +51,19 @@ O backend previsto será desenvolvido em ASP.NET Core Web API para proteger chav
 
 ## Instalação
 
-Para uma instalação reproduzível a partir do `package-lock.json`:
+Após receber uma entrega que altera dependências, execute:
+
+```bash
+npm install
+```
+
+O projeto fixa o registro público do npm no arquivo `.npmrc`.
+
+Nas execuções seguintes, quando `package.json` e `package-lock.json` já estiverem sincronizados, também pode ser usado:
 
 ```bash
 npm ci
 ```
-
-O projeto fixa o registro público do npm no arquivo `.npmrc` para impedir que URLs de registros internos ou temporários sejam reutilizadas.
 
 ## Execução
 
@@ -68,6 +78,24 @@ npm run android
 npm run ios
 npm run web
 ```
+
+## Navegação
+
+```text
+Início | Buscar | Quero assistir | Favoritos | Ajustes
+```
+
+A Splash é a rota inicial e direciona para `/(tabs)/inicio` somente depois da hidratação das preferências locais e da duração mínima configurada.
+
+## Persistência local
+
+As preferências de tema são persistidas com AsyncStorage. A mesma infraestrutura contém os contratos iniciais para:
+
+- favoritos;
+- lista Quero assistir;
+- histórico de visualizações.
+
+Nenhum desses dados exige login e, nesta etapa, permanece somente no aparelho.
 
 ## Builds EAS
 
@@ -101,12 +129,15 @@ O conteúdo final será produzido após a definição das integrações e SDKs, 
 
 ## Repositório GitHub
 
-Repositório planejado:
-
 ```text
 https://github.com/V1-AndreFlores/coruja-app
 ```
 
-## Status
+## Próximas etapas
 
-Estrutura inicial concluída. As próximas etapas são o mapa de telas, a navegação principal e os contratos de integração.
+1. definir contratos HTTP do catálogo;
+2. criar o backend ASP.NET Core;
+3. integrar tendências, pesquisa e detalhes;
+4. ativar favoritos, lista Quero assistir e histórico nas telas;
+5. implementar testes automatizados;
+6. preparar política de privacidade e publicação.

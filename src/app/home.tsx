@@ -1,3 +1,5 @@
-import { HomeScreen } from '@/presentation/screens/HomeScreen';
+import { Redirect } from 'expo-router';
 
-export default HomeScreen;
+export default function LegacyHomeRoute() {
+  return <Redirect href="/(tabs)/inicio" />;
+}

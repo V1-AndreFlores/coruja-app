@@ -3,18 +3,20 @@ import {
   PropsWithChildren,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
-import { useColorScheme } from 'react-native';
 
 import type { AppThemeMode } from '@/domain/models/AppThemeMode';
+import { appPreferencesRepository } from '@/infrastructure/storage/repositories';
 
 import { darkColors, lightColors, type AppColors } from './colors';
 
 type AppThemeContextValue = {
   mode: AppThemeMode;
   colors: AppColors;
+  isHydrated: boolean;
   setMode: (mode: AppThemeMode) => void;
   toggleMode: () => void;
 };
@@ -22,32 +24,52 @@ type AppThemeContextValue = {
 const AppThemeContext = createContext<AppThemeContextValue | undefined>(undefined);
 
 export function AppThemeProvider({ children }: PropsWithChildren) {
-  const systemMode = useColorScheme();
-  const [selectedMode, setSelectedMode] = useState<AppThemeMode | null>(null);
+  const [mode, setSelectedMode] = useState<AppThemeMode>('dark');
+  const [isHydrated, setIsHydrated] = useState(false);
 
-  const mode: AppThemeMode =
-    selectedMode ?? (systemMode === 'light' ? 'light' : 'dark');
+  useEffect(() => {
+    let isMounted = true;
+
+    void appPreferencesRepository
+      .getThemeMode()
+      .then((storedMode) => {
+        if (isMounted && storedMode) {
+          setSelectedMode(storedMode);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsHydrated(true);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const setMode = useCallback((nextMode: AppThemeMode) => {
     setSelectedMode(nextMode);
+    void appPreferencesRepository.setThemeMode(nextMode);
   }, []);
 
   const toggleMode = useCallback(() => {
     setSelectedMode((currentMode) => {
-      const effectiveMode =
-        currentMode ?? (systemMode === 'light' ? 'light' : 'dark');
-      return effectiveMode === 'dark' ? 'light' : 'dark';
+      const nextMode = currentMode === 'dark' ? 'light' : 'dark';
+      void appPreferencesRepository.setThemeMode(nextMode);
+      return nextMode;
     });
-  }, [systemMode]);
+  }, []);
 
   const value = useMemo<AppThemeContextValue>(
     () => ({
       mode,
       colors: mode === 'dark' ? darkColors : lightColors,
+      isHydrated,
       setMode,
       toggleMode,
     }),
-    [mode, setMode, toggleMode],
+    [isHydrated, mode, setMode, toggleMode],
   );
 
   return (
