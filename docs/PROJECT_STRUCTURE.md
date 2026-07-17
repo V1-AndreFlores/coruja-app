@@ -6,14 +6,32 @@ Este documento registra a estrutura, as fronteiras arquiteturais e as decisões 
 
 ## Arquitetura
 
-O projeto utiliza uma **Clean Architecture adaptada para React Native**, evitando abstrações sem necessidade concreta. As dependências apontam para dentro:
+O projeto utiliza Clean Architecture adaptada para React Native. As dependências apontam para dentro:
 
-- `domain`: tipos, entidades e regras independentes de framework;
-- `application`: contratos e futuros casos de uso;
-- `infrastructure`: implementações de armazenamento, HTTP, cache e integrações;
-- `presentation`: telas, componentes e gerenciamento de estado da interface;
+- `domain`: modelos independentes de framework;
+- `application`: portas e contratos da aplicação;
+- `infrastructure`: HTTP, TMDB, cache e armazenamento;
+- `presentation`: telas, componentes, hooks e estado da interface;
 - `app`: composição e roteamento com Expo Router;
-- `shared`: constantes e utilitários transversais.
+- `shared`: configuração, constantes e utilitários transversais.
+
+## Fluxo do catálogo
+
+```text
+HomeScreen / SearchScreen
+        ↓
+useHomeCatalog / useCatalogSearch
+        ↓
+CatalogRepository
+        ↓
+TmdbCatalogRepository
+        ↓
+TmdbClient
+        ↓
+TMDB API
+```
+
+As telas não dependem dos DTOs do TMDB. O mapeamento para `CatalogItemSummary` acontece na infraestrutura.
 
 ## Estrutura atual
 
@@ -26,12 +44,6 @@ coruja-app/
 ├── src/
 │   ├── app/
 │   │   ├── (tabs)/
-│   │   │   ├── _layout.tsx
-│   │   │   ├── ajustes.tsx
-│   │   │   ├── buscar.tsx
-│   │   │   ├── favoritos.tsx
-│   │   │   ├── inicio.tsx
-│   │   │   └── quero-assistir.tsx
 │   │   ├── _layout.tsx
 │   │   ├── +not-found.tsx
 │   │   ├── home.tsx
@@ -39,27 +51,40 @@ coruja-app/
 │   ├── application/
 │   │   └── contracts/
 │   │       ├── AppPreferencesRepository.ts
+│   │       ├── CatalogRepository.ts
 │   │       └── LocalLibraryRepository.ts
 │   ├── domain/
 │   │   └── models/
 │   │       ├── AppThemeMode.ts
 │   │       └── CatalogItemSummary.ts
 │   ├── infrastructure/
+│   │   ├── cache/
+│   │   │   └── MemoryCache.ts
+│   │   ├── http/
+│   │   │   └── tmdb/
+│   │   │       ├── repositories.ts
+│   │   │       ├── TmdbCatalogRepository.ts
+│   │   │       ├── TmdbClient.ts
+│   │   │       ├── TmdbDtos.ts
+│   │   │       ├── TmdbErrors.ts
+│   │   │       └── TmdbMappers.ts
 │   │   └── storage/
-│   │       ├── AsyncStorageAppPreferencesRepository.ts
-│   │       ├── AsyncStorageJsonStore.ts
-│   │       ├── AsyncStorageLocalLibraryRepository.ts
-│   │       └── repositories.ts
 │   ├── presentation/
 │   │   ├── components/
+│   │   ├── hooks/
+│   │   │   ├── useCatalogSearch.ts
+│   │   │   └── useHomeCatalog.ts
 │   │   ├── screens/
 │   │   └── theme/
 │   └── shared/
+│       ├── config/
+│       │   └── environment.ts
 │       └── constants/
 │           ├── app.ts
 │           ├── storage.ts
-│           └── timing.ts
-├── .editorconfig
+│           ├── timing.ts
+│           └── tmdb.ts
+├── .env.example
 ├── .gitignore
 ├── .npmrc
 ├── app.json
@@ -69,23 +94,58 @@ coruja-app/
 └── tsconfig.json
 ```
 
-## Navegação
+## Integração direta com o TMDB
 
-A navegação principal utiliza Expo Router com abas JavaScript:
+A decisão atual elimina backend e hospedagem. A aplicação aceita:
 
-```text
-/(tabs)/inicio
-/(tabs)/buscar
-/(tabs)/quero-assistir
-/(tabs)/favoritos
-/(tabs)/ajustes
+```dotenv
+EXPO_PUBLIC_TMDB_READ_TOKEN=
+EXPO_PUBLIC_TMDB_API_KEY=
 ```
 
-A rota `/` mantém a Splash. A rota legada `/home` redireciona para a aba Início, evitando quebra de links usados durante a estrutura inicial.
+Apenas uma credencial é necessária. O token Bearer tem prioridade quando ambos são informados.
+
+### Riscos aceitos
+
+- credenciais `EXPO_PUBLIC_*` ficam incorporadas ao bundle;
+- terceiros podem extrair e reutilizar a credencial;
+- a mitigação é limitar o uso a leitura, reduzir chamadas e permitir rotação rápida;
+- o repositório não contém a credencial real.
+
+### Proteções implementadas
+
+- timeout de 12 segundos;
+- cancelamento com `AbortController`;
+- debounce de 500 ms na pesquisa;
+- exclusão de resultados adultos;
+- cache em memória para catálogo e busca;
+- tratamento específico para HTTP 401 e 429;
+- mensagens de erro adequadas para configuração, autenticação, rede e timeout.
+
+## Endpoints atuais
+
+```text
+GET /trending/all/day
+GET /movie/popular
+GET /tv/popular
+GET /search/multi
+```
+
+As consultas usam `pt-BR`; filmes populares usam também a região `BR`.
+
+## Imagens
+
+Os cards constroem as URLs de pôster usando:
+
+```text
+https://image.tmdb.org/t/p/w342{poster_path}
+```
+
+Quando não há pôster, a interface exibe um placeholder local.
 
 ## Tema
 
-O tema escuro é o padrão inicial. A preferência selecionada é carregada antes da saída da Splash e persistida localmente.
+O tema escuro é o padrão inicial. A preferência é carregada antes da saída da Splash e persistida localmente.
 
 ### Tema escuro
 
@@ -115,44 +175,31 @@ O tema escuro é o padrão inicial. A preferência selecionada é carregada ante
 
 ## Persistência local
 
-A implementação inicial usa uma porta por responsabilidade:
-
-- `AppPreferencesRepository`: preferências do aplicativo, começando pelo tema;
-- `LocalLibraryRepository`: favoritos, lista Quero assistir e histórico;
-- `AsyncStorageJsonStore`: serialização JSON e tratamento centralizado de falhas;
-- implementações `AsyncStorage*`: adaptadores concretos de infraestrutura.
-
-A interface não depende diretamente do AsyncStorage. Isso permite substituir o mecanismo por SQLite sem alterar as telas ou os contratos de aplicação.
-
-## Componentes de apresentação
-
-Os principais componentes reutilizáveis são:
-
-- `AppScreen`: Safe Area e rolagem padronizadas;
-- `AppHeader`: marca em temas claro e escuro;
-- `AppPageTitle` e `AppSectionHeader`: hierarquia textual consistente;
-- `AppSearchButton` e `AppSearchInput`: entrada de busca;
-- `AppStateView`: estados de carregamento, vazio e erro;
-- `FeatureCard` e `CatalogSkeletonRow`: composição da tela inicial;
-- `ThemeSelector`, `SettingsCard` e `SettingsLinkRow`: estrutura dos Ajustes;
-- `AppIcon`: abstração de símbolos entre Android, iOS e Web.
+- `AppPreferencesRepository`: preferências do aplicativo;
+- `LocalLibraryRepository`: favoritos, Quero assistir e histórico;
+- `AsyncStorageJsonStore`: serialização JSON e tratamento centralizado;
+- implementações `AsyncStorage*`: adaptadores concretos.
 
 ## Decisões técnicas
 
 1. O pacote Android permanece `br.app.andreflores.coruja`.
-2. A Splash permanece por no mínimo três segundos e também aguarda a hidratação das preferências.
-3. O tema padrão é escuro, sem depender do tema do sistema.
-4. As abas usam rotas explícitas para evitar conflito entre a Splash em `/` e a tela Início.
-5. A persistência é encapsulada por repositórios e não é acessada diretamente pelas telas.
-6. A camada visual não depende do futuro fornecedor de catálogo.
-7. O `versionCode` deve ser conferido na Play Console antes do primeiro AAB de produção.
+2. A Splash permanece por no mínimo três segundos.
+3. O tema padrão é escuro.
+4. Não existe backend próprio nesta etapa.
+5. A integração externa fica encapsulada em repositórios.
+6. O cliente HTTP não expõe DTOs do TMDB à apresentação.
+7. O cache é apenas em memória e não substitui persistência de biblioteca local.
+8. A pesquisa exige ao menos dois caracteres.
+9. Resultados do tipo pessoa são descartados nesta etapa.
+10. O logotipo oficial do TMDB deverá ser incluído antes da publicação.
+11. O `versionCode` deve ser conferido na Play Console antes do AAB.
 
 ## Próximas etapas técnicas
 
-1. definir DTOs e contratos do backend;
-2. criar cliente HTTP com timeout, cancelamento e tratamento de falhas;
-3. implementar consultas de tendências, populares e pesquisa;
-4. criar detalhes de filmes e séries;
-5. integrar favoritos, Quero assistir e histórico às telas;
-6. adicionar testes unitários e de componentes;
+1. criar rota e tela de detalhes;
+2. integrar detalhes, créditos, vídeos e classificação indicativa;
+3. integrar provedores de streaming do Brasil;
+4. ativar favoritos, Quero assistir e histórico;
+5. adicionar o logotipo aprovado do TMDB;
+6. implementar testes unitários dos mapeadores e repositórios;
 7. preparar privacidade, EAS e publicação.

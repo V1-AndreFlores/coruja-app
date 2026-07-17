@@ -44,6 +44,19 @@ export function SettingsScreen() {
         />
       </SettingsCard>
 
+      <SettingsCard title="Fontes de dados">
+        <SettingsLinkRow
+          description="This product uses the TMDB API but is not endorsed or certified by TMDB."
+          icon="movie"
+          title="The Movie Database (TMDB)"
+        />
+        <SettingsLinkRow
+          description="A disponibilidade de streaming será fornecida pelo TMDB em parceria com a JustWatch."
+          icon="streaming"
+          title="Onde assistir"
+        />
+      </SettingsCard>
+
       <SettingsCard title="Privacidade e aplicativo">
         <SettingsLinkRow
           description="Consulte como o Coruja tratará dados e integrações."

@@ -7,10 +7,75 @@ import { AppScreen } from '@/presentation/components/AppScreen';
 import { AppSearchButton } from '@/presentation/components/AppSearchButton';
 import { AppSectionHeader } from '@/presentation/components/AppSectionHeader';
 import { AppStateView } from '@/presentation/components/AppStateView';
+import { CatalogHorizontalList } from '@/presentation/components/CatalogHorizontalList';
 import { CatalogSkeletonRow } from '@/presentation/components/CatalogSkeletonRow';
 import { FeatureCard } from '@/presentation/components/FeatureCard';
+import { useHomeCatalog } from '@/presentation/hooks/useHomeCatalog';
 
 export function HomeScreen() {
+  const {
+    trending,
+    popularMovies,
+    popularTv,
+    isLoading,
+    errorMessage,
+    retry,
+  } = useHomeCatalog();
+
+  const renderCatalog = () => {
+    if (isLoading) {
+      return (
+        <>
+          <View style={styles.section}>
+            <AppSectionHeader title="Em alta" />
+            <CatalogSkeletonRow />
+          </View>
+          <View style={styles.section}>
+            <AppSectionHeader title="Filmes populares" />
+            <CatalogSkeletonRow />
+          </View>
+          <View style={styles.section}>
+            <AppSectionHeader title="Séries populares" />
+            <CatalogSkeletonRow />
+          </View>
+        </>
+      );
+    }
+
+    if (errorMessage) {
+      return (
+        <AppStateView
+          actionLabel="Tentar novamente"
+          description={errorMessage}
+          onActionPress={retry}
+          title="Catálogo indisponível"
+          variant="error"
+        />
+      );
+    }
+
+    return (
+      <>
+        <View style={styles.section}>
+          <AppSectionHeader title="Em alta hoje" />
+          <CatalogHorizontalList items={trending} />
+        </View>
+        <View style={styles.section}>
+          <AppSectionHeader
+            actionLabel="Buscar"
+            onActionPress={() => router.push('/(tabs)/buscar')}
+            title="Filmes populares"
+          />
+          <CatalogHorizontalList items={popularMovies} />
+        </View>
+        <View style={styles.section}>
+          <AppSectionHeader title="Séries populares" />
+          <CatalogHorizontalList items={popularTv} />
+        </View>
+      </>
+    );
+  };
+
   return (
     <AppScreen contentStyle={styles.container} scroll>
       <AppHeader />
@@ -33,28 +98,7 @@ export function HomeScreen() {
         />
       </View>
 
-      <View style={styles.section}>
-        <AppSectionHeader title="Em alta" />
-        <AppStateView
-          description="A seção será preenchida quando a integração com o catálogo estiver disponível."
-          title="Preparando recomendações"
-          variant="loading"
-        />
-      </View>
-
-      <View style={styles.section}>
-        <AppSectionHeader
-          actionLabel="Buscar"
-          onActionPress={() => router.push('/(tabs)/buscar')}
-          title="Filmes populares"
-        />
-        <CatalogSkeletonRow />
-      </View>
-
-      <View style={styles.section}>
-        <AppSectionHeader title="Séries populares" />
-        <CatalogSkeletonRow />
-      </View>
+      {renderCatalog()}
     </AppScreen>
   );
 }

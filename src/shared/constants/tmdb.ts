@@ -1,0 +1,11 @@
+export const TMDB = {
+  apiBaseUrl: 'https://api.themoviedb.org/3',
+  imageBaseUrl: 'https://image.tmdb.org/t/p',
+  language: 'pt-BR',
+  region: 'BR',
+  posterSize: 'w342',
+  searchDebounceMs: 500,
+  requestTimeoutMs: 12_000,
+  catalogCacheTtlMs: 10 * 60 * 1000,
+  searchCacheTtlMs: 5 * 60 * 1000,
+} as const;

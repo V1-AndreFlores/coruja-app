@@ -1,10 +1,11 @@
 import { Tabs } from 'expo-router';
+import type { ColorValue } from 'react-native';
 
 import { AppIcon, type AppIconName } from '@/presentation/components/AppIcon';
 import { useAppTheme } from '@/presentation/theme/AppThemeProvider';
 
 type TabIconProps = {
-  color: string;
+  color: ColorValue;
   name: AppIconName;
 };
 
