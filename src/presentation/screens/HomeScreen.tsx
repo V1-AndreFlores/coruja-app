@@ -106,6 +106,7 @@ export function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     gap: 22,
+    paddingBottom: 96,
   },
   featureList: {
     gap: 12,

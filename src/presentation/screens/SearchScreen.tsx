@@ -85,6 +85,7 @@ export function SearchScreen() {
 const styles = StyleSheet.create({
   container: {
     gap: 20,
+    paddingBottom: 96,
   },
   results: {
     gap: 12,
