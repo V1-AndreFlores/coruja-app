@@ -30,7 +30,8 @@ A aplicação contém:
 - telas Favoritos e Quero assistir com grade responsiva, abertura dos detalhes e remoção confirmada;
 - atualização automática das listas ao retornar da tela de detalhes;
 - ordenação por inclusão mais recente e independência entre as duas listas;
-- registro local do histórico de títulos visualizados;
+- histórico de visualizações acessível pelos Ajustes, com data e hora, remoção individual e limpeza completa;
+- limite de 100 títulos no histórico, sem duplicidade e com o mais recente no início;
 - idioma `pt-BR` e região padrão `BR`;
 - autenticação por API Read Access Token ou API Key;
 - timeout, cancelamento, debounce de pesquisa e cache em memória;
@@ -157,7 +158,9 @@ As preferências de tema são persistidas com AsyncStorage. A biblioteca local a
 - lista Quero assistir;
 - histórico de visualizações, limitado aos 100 títulos mais recentes.
 
-Favoritos e Quero assistir são coleções independentes. Os itens mais recentes ficam no início, as telas recarregam quando voltam ao foco e a remoção direta exige confirmação. Nenhum desses dados exige login e tudo permanece somente no aparelho.
+Favoritos e Quero assistir são coleções independentes. Os itens mais recentes ficam no início, as telas recarregam quando voltam ao foco e a remoção direta exige confirmação.
+
+O histórico é acessado em `Ajustes > Histórico de visualizações`, mantém até 100 títulos e registra data e hora. Ao abrir novamente o mesmo título, o registro existente é atualizado e movido para o início, sem duplicidade. É possível remover um item ou limpar todo o histórico sem afetar Favoritos e Quero assistir. Nenhum desses dados exige login e tudo permanece somente no aparelho.
 
 ## Builds EAS
 
@@ -201,9 +204,8 @@ https://github.com/V1-AndreFlores/coruja-app
 
 ## Próximas etapas
 
-1. criar a tela de histórico e controles para limpeza local;
-2. adicionar filtros avançados de pesquisa;
-3. finalizar Sobre, Créditos e Política de Privacidade;
-4. incluir o logotipo oficial aprovado do TMDB na área de créditos;
-5. implementar testes automatizados dos mapeadores e repositórios;
-6. validar o fluxo completo em Android e preparar a publicação.
+1. adicionar filtros avançados de pesquisa;
+2. finalizar Sobre, Créditos e Política de Privacidade;
+3. incluir o logotipo oficial aprovado do TMDB na área de créditos;
+4. implementar testes automatizados dos mapeadores e repositórios;
+5. validar o fluxo completo em Android e preparar a publicação.

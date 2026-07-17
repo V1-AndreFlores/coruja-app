@@ -80,6 +80,16 @@ export class AsyncStorageLocalLibraryRepository
     await this.store.write(STORAGE_KEYS.history, nextHistory);
   }
 
+  async removeHistoryEntry(item: CatalogItemSummary): Promise<void> {
+    const currentHistory = await this.getHistory();
+    const key = itemKey(item);
+    const nextHistory = currentHistory.filter(
+      (currentItem) => itemKey(currentItem) !== key,
+    );
+
+    await this.store.write(STORAGE_KEYS.history, nextHistory);
+  }
+
   clearHistory(): Promise<void> {
     return this.store.remove(STORAGE_KEYS.history);
   }

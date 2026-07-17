@@ -11,6 +11,7 @@ type AppConfirmDialogProps = {
   confirmLabel: string;
   cancelLabel?: string;
   isProcessing?: boolean;
+  processingLabel?: string;
   onCancel: () => void;
   onConfirm: () => void;
 };
@@ -22,6 +23,7 @@ export function AppConfirmDialog({
   confirmLabel,
   cancelLabel = 'Cancelar',
   isProcessing = false,
+  processingLabel = 'Removendo...',
   onCancel,
   onConfirm,
 }: AppConfirmDialogProps) {
@@ -83,7 +85,7 @@ export function AppConfirmDialog({
               ]}
             >
               <AppText style={styles.confirmText}>
-                {isProcessing ? 'Removendo...' : confirmLabel}
+                {isProcessing ? processingLabel : confirmLabel}
               </AppText>
             </Pressable>
           </View>

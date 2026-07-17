@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { StyleSheet, View } from 'react-native';
 
@@ -33,13 +34,14 @@ export function SettingsScreen() {
 
       <SettingsCard title="Dados locais">
         <SettingsLinkRow
-          description="Favoritos, lista Quero assistir e histórico preparados para persistência local."
+          description="Favoritos, Quero assistir e histórico ficam somente neste aparelho."
           icon="database"
           title="Armazenamento no aparelho"
         />
         <SettingsLinkRow
-          description="O histórico poderá ser limpo quando a funcionalidade estiver disponível."
+          description="Consulte ou remova os últimos 100 títulos visualizados."
           icon="history"
+          onPress={() => router.push('/history')}
           title="Histórico de visualizações"
         />
       </SettingsCard>

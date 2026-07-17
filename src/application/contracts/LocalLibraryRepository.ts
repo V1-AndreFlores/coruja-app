@@ -10,5 +10,6 @@ export interface LocalLibraryRepository {
   setWatchlistItem(item: CatalogItemSummary, selected: boolean): Promise<void>;
   getHistory(): Promise<HistoryEntry[]>;
   addHistoryEntry(item: CatalogItemSummary): Promise<void>;
+  removeHistoryEntry(item: CatalogItemSummary): Promise<void>;
   clearHistory(): Promise<void>;
 }

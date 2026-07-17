@@ -45,6 +45,7 @@ coruja-app/
 │   ├── app/
 │   │   ├── (tabs)/
 │   │   ├── title/[mediaType]/[id].tsx
+│   │   ├── history.tsx
 │   │   ├── _layout.tsx
 │   │   ├── +not-found.tsx
 │   │   ├── home.tsx
@@ -76,6 +77,7 @@ coruja-app/
 │   │   ├── hooks/
 │   │   │   ├── useCatalogSearch.ts
 │   │   │   ├── useHomeCatalog.ts
+│   │   │   ├── useHistory.ts
 │   │   │   ├── useLocalLibraryList.ts
 │   │   │   └── useTitleDetails.ts
 │   │   ├── screens/
@@ -209,6 +211,22 @@ AsyncStorageLocalLibraryRepository
 
 As listas são carregadas novamente sempre que a aba recebe foco. Cada coleção mantém sua própria chave de armazenamento; remover de Favoritos não altera Quero assistir e vice-versa. Novas inclusões são inseridas no início, preservando a ordem mais recente primeiro.
 
+### Fluxo do histórico
+
+```text
+SettingsScreen
+        ↓
+HistoryScreen
+        ↓
+useHistory
+        ↓
+LocalLibraryRepository
+        ↓
+AsyncStorageLocalLibraryRepository
+```
+
+O histórico é limitado aos 100 títulos mais recentes. A chave composta `mediaType:id` evita duplicidade; uma nova visualização atualiza o horário e move o título para o início. A tela recarrega ao receber foco, permite abertura dos detalhes, remoção individual e limpeza total com confirmação. Essas operações não afetam Favoritos nem Quero assistir.
+
 ## Decisões técnicas
 
 1. O pacote Android permanece `br.app.andreflores.coruja`.
@@ -227,12 +245,13 @@ As listas são carregadas novamente sempre que a aba recebe foco. Cada coleção
 14. Os dados de provedores exibem atribuição explícita à JustWatch.
 15. Favoritos e Quero assistir usam uma tela genérica de biblioteca local, grade responsiva e confirmação antes da remoção.
 16. O retorno da tela de detalhes recarrega automaticamente a coleção focada.
+17. O histórico é acessado pelos Ajustes, limitado a 100 itens e não mantém duplicidades.
+18. A remoção individual e a limpeza total do histórico exigem confirmação e não alteram outras listas locais.
 
 ## Próximas etapas técnicas
 
-1. expor e limpar o histórico local;
-2. adicionar filtros de pesquisa;
-3. adicionar o logotipo aprovado do TMDB;
-4. implementar testes unitários dos mapeadores e repositórios;
-5. validar responsividade e navegação em Android;
-6. preparar privacidade, EAS e publicação.
+1. adicionar filtros de pesquisa;
+2. adicionar o logotipo aprovado do TMDB;
+3. implementar testes unitários dos mapeadores e repositórios;
+4. validar responsividade e navegação em Android;
+5. preparar privacidade, EAS e publicação.
