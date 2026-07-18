@@ -18,7 +18,7 @@ Este repositório representa a reconstrução do aplicativo Coruja. A nova vers�
 
 A aplicação contém:
 
-- Splash nativa e tela de Splash com duração mínima de três segundos;
+- Splash nativa e tela de Splash com duração mínima de três segundos, usando o mesmo ativo, tamanho e posicionamento para uma transição contínua;
 - navegação por abas: Início, Buscar, Quero assistir, Favoritos e Ajustes;
 - tema escuro como padrão e persistência da seleção de tema;
 - integração direta com o TMDB para tendências, filmes populares, séries populares e busca por título ou profissional;

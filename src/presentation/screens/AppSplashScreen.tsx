@@ -1,12 +1,6 @@
 import { router } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Animated,
-  Image,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Image, StyleSheet, View } from 'react-native';
 
 import { useAppTheme } from '@/presentation/theme/AppThemeProvider';
 import { SPLASH_MINIMUM_DURATION_MS } from '@/shared/constants/timing';
@@ -14,35 +8,16 @@ import { SPLASH_MINIMUM_DURATION_MS } from '@/shared/constants/timing';
 export function AppSplashScreen() {
   const { isHydrated } = useAppTheme();
   const [minimumDurationElapsed, setMinimumDurationElapsed] = useState(false);
-  const opacity = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0.96)).current;
 
   useEffect(() => {
-    const animation = Animated.parallel([
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 520,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scale, {
-        toValue: 1,
-        friction: 8,
-        tension: 60,
-        useNativeDriver: true,
-      }),
-    ]);
-
-    animation.start();
-
     const timeoutId = setTimeout(() => {
       setMinimumDurationElapsed(true);
     }, SPLASH_MINIMUM_DURATION_MS);
 
     return () => {
-      animation.stop();
       clearTimeout(timeoutId);
     };
-  }, [opacity, scale]);
+  }, []);
 
   useEffect(() => {
     if (minimumDurationElapsed && isHydrated) {
@@ -52,16 +27,16 @@ export function AppSplashScreen() {
 
   return (
     <View style={styles.container}>
-      <Animated.View style={{ opacity, transform: [{ scale }] }}>
+      <View style={styles.brandStage}>
         <Image
           accessibilityLabel="Coruja - Sobre filmes e séries"
           resizeMode="contain"
-          source={require('../../../assets/images/splash-icon.png')}
-          style={styles.logo}
+          source={require('../../../assets/images/splash-brand.png')}
+          style={styles.brand}
         />
-      </Animated.View>
 
-      <ActivityIndicator color="#FF4B4B" size="small" style={styles.loader} />
+        <ActivityIndicator color="#FF4B4B" size="small" style={styles.loader} />
+      </View>
     </View>
   );
 }
@@ -73,11 +48,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#0B0F14',
   },
-  logo: {
+  brandStage: {
     width: 320,
-    height: 400,
+    height: 320,
+  },
+  brand: {
+    ...StyleSheet.absoluteFill,
+    width: 320,
+    height: 320,
   },
   loader: {
-    marginTop: 18,
+    position: 'absolute',
+    top: 220,
+    alignSelf: 'center',
   },
 });

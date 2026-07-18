@@ -1,7 +1,13 @@
 import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 
 import { AppThemeProvider, useAppTheme } from '@/presentation/theme/AppThemeProvider';
+
+SplashScreen.setOptions({
+  duration: 250,
+  fade: true,
+});
 
 function AppNavigation() {
   const { colors, mode } = useAppTheme();
