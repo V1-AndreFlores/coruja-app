@@ -31,10 +31,11 @@ export function AppScreen({
     >
       {scroll ? (
         <ScrollView
-          contentContainerStyle={[styles.content, styles.scrollContent, contentStyle]}
+          contentContainerStyle={[styles.scrollContent, contentStyle]}
           keyboardShouldPersistTaps="handled"
           nestedScrollEnabled
           showsVerticalScrollIndicator={false}
+          style={styles.scrollView}
         >
           {children}
           {bottomSpacing > 0 ? (
@@ -55,6 +56,9 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  scrollView: {
+    flex: 1,
+  },
   bottomSpacer: {
     flexShrink: 0,
   },
@@ -65,6 +69,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 12,
     paddingBottom: 32,
   },
 });
