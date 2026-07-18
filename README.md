@@ -36,9 +36,12 @@ A aplicação contém:
 - autenticação por API Read Access Token ou API Key;
 - busca por título ou pelo nome de atores, atrizes, diretores e demais profissionais, retornando somente filmes e séries;
 - resultados encontrados diretamente pelo título aparecem antes dos créditos da pessoa mais relevante;
-- filtros simples por tipo, gênero, período de lançamento, avaliação mínima e plataforma no Brasil;
+- exploração do catálogo somente pelos filtros, sem exigir título ou profissional;
+- filtros simples por tipo, gênero, período de lançamento, avaliação mínima, disponibilidade e múltiplos streamings no Brasil;
 - filtros ativos exibidos como etiquetas removíveis e mantidos durante a navegação da sessão;
-- filtro de plataforma desabilitado em buscas identificadas como nome de profissional, evitando consultas excessivas;
+- lista dinâmica de provedores disponíveis no Brasil, com seleção de vários serviços em lógica “qualquer um deles”;
+- configuração local “Meus streamings”, incluindo Apple TV+, para reutilizar as assinaturas do usuário na busca;
+- filtro de streaming ignorado em buscas identificadas como nome de profissional, evitando consultas excessivas;
 - créditos de elenco e equipe técnica são unificados, sem duplicidade, e limitados aos 20 trabalhos mais relevantes;
 - timeout, cancelamento, debounce de pesquisa e cache em memória;
 - carregamento bloqueante padronizado na primeira carga de Início, Busca e Detalhes, usando o mesmo indicador circular da Splash;
@@ -158,7 +161,9 @@ Início | Buscar | Quero assistir | Favoritos | Ajustes
 
 Na Busca, o termo é consultado simultaneamente como título e como nome de profissional. A interface exibe somente filmes e séries; quando uma pessoa é localizada, seus créditos combinados de elenco e equipe técnica são incorporados após os resultados diretos de título.
 
-O painel de filtros mantém a experiência objetiva: permite selecionar tipo, um gênero, intervalo de anos, avaliação mínima e uma plataforma disponível no Brasil. A disponibilidade pode ser refinada por assinatura, aluguel ou compra. Os filtros ativos aparecem abaixo do campo de pesquisa e podem ser removidos individualmente. Em buscas identificadas como nome de profissional, o filtro de plataforma é removido e desabilitado para evitar uma consulta de disponibilidade para cada crédito associado.
+O campo de texto não é obrigatório quando há filtros ativos. Nesse modo, o aplicativo usa os endpoints de descoberta do TMDB para explorar filmes e séries por tipo, gênero, período, avaliação e disponibilidade.
+
+O painel permite selecionar vários streamings ao mesmo tempo. A lógica é inclusiva: o título pode estar disponível em qualquer um dos serviços marcados. A relação de provedores é carregada dinamicamente para o Brasil, e `Ajustes > Meus streamings` permite salvar as assinaturas do usuário no aparelho. Os filtros ativos aparecem abaixo do campo e podem ser removidos individualmente. Em buscas identificadas como nome de profissional, o filtro de streaming é mantido visualmente, mas não é aplicado para evitar uma consulta de disponibilidade para cada crédito associado.
 
 Os cards de Início e Buscar abrem a rota dinâmica:
 
@@ -168,7 +173,7 @@ Os cards de Início e Buscar abrem a rota dinâmica:
 
 ## Persistência local
 
-As preferências de tema são persistidas com AsyncStorage. A biblioteca local armazena:
+As preferências de tema e a seleção de “Meus streamings” são persistidas com AsyncStorage. A biblioteca local armazena:
 
 - favoritos;
 - lista Quero assistir;
@@ -178,7 +183,7 @@ Favoritos e Quero assistir são coleções independentes. Os itens mais recentes
 
 O histórico é acessado em `Ajustes > Histórico de visualizações`, mantém até 100 títulos e registra data e hora. Ao abrir novamente o mesmo título, o registro existente é atualizado e movido para o início, sem duplicidade. É possível remover um item ou limpar todo o histórico sem afetar Favoritos e Quero assistir.
 
-A área `Ajustes > Gerenciar dados locais` apresenta as quantidades armazenadas e permite limpar Favoritos, Quero assistir, histórico ou as três coleções em uma única operação. A preferência de tema é preservada. Nenhum desses dados exige login e tudo permanece somente no aparelho.
+A área `Ajustes > Gerenciar dados locais` apresenta as quantidades armazenadas e permite limpar Favoritos, Quero assistir, histórico ou as três coleções em uma única operação. As preferências de tema e de streamings são preservadas. Nenhum desses dados exige login e tudo permanece somente no aparelho.
 
 ## Builds EAS
 

@@ -32,6 +32,7 @@ type SearchFiltersModalProps = {
   value: SearchFilters;
   providers: WatchProviderOption[];
   providersStatus: ProviderStatus;
+  myStreamingProviderKeys: string[];
   platformDisabled: boolean;
   onApply: (filters: SearchFilters) => void;
   onClose: () => void;
@@ -77,6 +78,44 @@ function ChoiceChip<T extends string | number | undefined>({
   );
 }
 
+type MultiChoiceChipProps = {
+  label: string;
+  selected: boolean;
+  disabled?: boolean;
+  onPress: () => void;
+};
+
+function MultiChoiceChip({
+  label,
+  selected,
+  disabled = false,
+  onPress,
+}: MultiChoiceChipProps) {
+  const { colors } = useAppTheme();
+
+  return (
+    <Pressable
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: selected, disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.choiceChip,
+        {
+          backgroundColor: selected ? colors.primary : colors.card,
+          borderColor: selected ? colors.primary : colors.border,
+          opacity: disabled ? 0.42 : pressed ? 0.72 : 1,
+        },
+      ]}
+    >
+      <AppText style={[styles.choiceLabel, selected && styles.selectedLabel]}>
+        {selected ? '✓ ' : ''}
+        {label}
+      </AppText>
+    </Pressable>
+  );
+}
+
 function parseYear(value: string): number | undefined {
   if (!value.trim()) {
     return undefined;
@@ -101,11 +140,25 @@ function isGenreAvailable(
     : option.tvGenreIds.length > 0;
 }
 
+function isProviderAvailable(
+  provider: WatchProviderOption,
+  mediaType: SearchMediaType,
+): boolean {
+  if (mediaType === 'all') {
+    return Boolean(provider.movieProviderId || provider.tvProviderId);
+  }
+
+  return mediaType === 'movie'
+    ? Boolean(provider.movieProviderId)
+    : Boolean(provider.tvProviderId);
+}
+
 export function SearchFiltersModal({
   visible,
   value,
   providers,
   providersStatus,
+  myStreamingProviderKeys,
   platformDisabled,
   onApply,
   onClose,
@@ -119,6 +172,7 @@ export function SearchFiltersModal({
     value.yearTo ? String(value.yearTo) : '',
   );
   const [validationMessage, setValidationMessage] = useState<string>();
+  const [showAllProviders, setShowAllProviders] = useState(false);
 
   useEffect(() => {
     if (!visible) {
@@ -126,18 +180,41 @@ export function SearchFiltersModal({
     }
 
     const normalizedValue = platformDisabled
-      ? { ...value, providerKey: undefined, availability: 'any' as const }
+      ? { ...value, providerKeys: [], availability: 'any' as const }
       : value;
 
     setDraft(normalizedValue);
     setYearFrom(normalizedValue.yearFrom ? String(normalizedValue.yearFrom) : '');
     setYearTo(normalizedValue.yearTo ? String(normalizedValue.yearTo) : '');
     setValidationMessage(undefined);
+    setShowAllProviders(false);
   }, [platformDisabled, value, visible]);
 
-  const selectedProvider = useMemo(
-    () => providers.find((provider) => provider.key === draft.providerKey),
-    [draft.providerKey, providers],
+  const selectedProviderKeySet = useMemo(
+    () => new Set(draft.providerKeys),
+    [draft.providerKeys],
+  );
+
+  const compactProviders = useMemo(() => {
+    const highlightedKeys = new Set([
+      ...myStreamingProviderKeys,
+      ...draft.providerKeys,
+    ]);
+    const highlighted = providers.filter((provider) =>
+      highlightedKeys.has(provider.key),
+    );
+
+    if (highlighted.length > 0) {
+      return highlighted;
+    }
+
+    return providers.slice(0, 8);
+  }, [draft.providerKeys, myStreamingProviderKeys, providers]);
+
+  const providerOptions = showAllProviders ? providers : compactProviders;
+  const hiddenProviderCount = Math.max(
+    0,
+    providers.length - compactProviders.length,
   );
 
   const selectMediaType = (mediaType: SearchMediaType) => {
@@ -148,11 +225,43 @@ export function SearchFiltersModal({
         current.genre && isGenreAvailable(current.genre, mediaType)
           ? current.genre
           : undefined,
+      providerKeys: current.providerKeys.filter((providerKey) => {
+        const provider = providers.find((item) => item.key === providerKey);
+        return provider ? isProviderAvailable(provider, mediaType) : true;
+      }),
+    }));
+  };
+
+  const toggleProvider = (providerKey: string) => {
+    setDraft((current) => {
+      const selected = current.providerKeys.includes(providerKey);
+      const providerKeys = selected
+        ? current.providerKeys.filter((key) => key !== providerKey)
+        : [...current.providerKeys, providerKey];
+
+      return {
+        ...current,
+        providerKeys,
+        availability: providerKeys.length === 0 ? 'any' : current.availability,
+      };
+    });
+  };
+
+  const useMyStreamings = () => {
+    const availableKeys = myStreamingProviderKeys.filter((providerKey) => {
+      const provider = providers.find((item) => item.key === providerKey);
+      return provider ? isProviderAvailable(provider, draft.mediaType) : false;
+    });
+
+    setDraft((current) => ({
+      ...current,
+      providerKeys: availableKeys,
+      availability: availableKeys.length > 0 ? 'flatrate' : 'any',
     }));
   };
 
   const clearFilters = () => {
-    setDraft({ mediaType: 'all', availability: 'any' });
+    setDraft({ mediaType: 'all', providerKeys: [], availability: 'any' });
     setYearFrom('');
     setYearTo('');
     setValidationMessage(undefined);
@@ -188,9 +297,11 @@ export function SearchFiltersModal({
       ...draft,
       yearFrom: parsedYearFrom,
       yearTo: parsedYearTo,
-      providerKey: platformDisabled ? undefined : draft.providerKey,
+      providerKeys: platformDisabled ? [] : draft.providerKeys,
       availability:
-        platformDisabled || !draft.providerKey ? 'any' : draft.availability,
+        platformDisabled || draft.providerKeys.length === 0
+          ? 'any'
+          : draft.availability,
     });
   };
 
@@ -201,7 +312,7 @@ export function SearchFiltersModal({
       transparent
       visible={visible}
     >
-      <View style={[styles.overlay, { backgroundColor: colors.overlay }]}>
+      <View style={[styles.overlay, { backgroundColor: colors.overlay }]}> 
         <Pressable
           accessibilityLabel="Fechar filtros"
           accessibilityRole="button"
@@ -219,7 +330,7 @@ export function SearchFiltersModal({
             <View style={styles.headerText}>
               <AppText style={styles.title}>Filtros</AppText>
               <AppText secondary style={styles.subtitle}>
-                Refine os resultados sem alterar o termo pesquisado.
+                Refine uma pesquisa ou explore o catálogo sem preencher o campo.
               </AppText>
             </View>
             <Pressable
@@ -240,9 +351,9 @@ export function SearchFiltersModal({
 
           <ScrollView
             contentContainerStyle={styles.content}
-            style={styles.scroll}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
+            style={styles.scroll}
           >
             <View style={styles.section}>
               <AppText style={styles.sectionTitle}>Tipo</AppText>
@@ -262,7 +373,7 @@ export function SearchFiltersModal({
             <View style={styles.section}>
               <AppText style={styles.sectionTitle}>Gênero</AppText>
               <AppText secondary style={styles.helperText}>
-                Selecione apenas um gênero para manter a busca objetiva.
+                Selecione apenas um gênero para manter a exploração objetiva.
               </AppText>
               <View style={styles.choices}>
                 <ChoiceChip
@@ -290,19 +401,14 @@ export function SearchFiltersModal({
 
             <View style={styles.section}>
               <AppText style={styles.sectionTitle}>Período de lançamento</AppText>
-              <View style={styles.yearFields}>
+              <View style={styles.yearRow}>
                 <View style={styles.yearField}>
-                  <AppText secondary style={styles.fieldLabel}>
-                    De
-                  </AppText>
+                  <AppText secondary style={styles.fieldLabel}>De</AppText>
                   <TextInput
                     accessibilityLabel="Ano inicial"
                     keyboardType="number-pad"
                     maxLength={4}
-                    onChangeText={(text) => {
-                      setYearFrom(text.replace(/\D/g, ''));
-                      setValidationMessage(undefined);
-                    }}
+                    onChangeText={setYearFrom}
                     placeholder="Ex.: 2010"
                     placeholderTextColor={colors.textSecondary}
                     style={[
@@ -317,18 +423,13 @@ export function SearchFiltersModal({
                   />
                 </View>
                 <View style={styles.yearField}>
-                  <AppText secondary style={styles.fieldLabel}>
-                    Até
-                  </AppText>
+                  <AppText secondary style={styles.fieldLabel}>Até</AppText>
                   <TextInput
                     accessibilityLabel="Ano final"
                     keyboardType="number-pad"
                     maxLength={4}
-                    onChangeText={(text) => {
-                      setYearTo(text.replace(/\D/g, ''));
-                      setValidationMessage(undefined);
-                    }}
-                    placeholder="Ex.: 2025"
+                    onChangeText={setYearTo}
+                    placeholder="Ex.: 2026"
                     placeholderTextColor={colors.textSecondary}
                     style={[
                       styles.input,
@@ -365,11 +466,25 @@ export function SearchFiltersModal({
             </View>
 
             <View style={styles.section}>
-              <AppText style={styles.sectionTitle}>Onde assistir</AppText>
+              <View style={styles.sectionHeaderRow}>
+                <View style={styles.sectionHeaderText}>
+                  <AppText style={styles.sectionTitle}>Onde assistir</AppText>
+                  {!platformDisabled ? (
+                    <AppText secondary style={styles.helperText}>
+                      Selecione vários serviços. O resultado pode estar disponível em qualquer um deles.
+                    </AppText>
+                  ) : null}
+                </View>
+                {draft.providerKeys.length > 0 ? (
+                  <AppText secondary style={styles.selectionCount}>
+                    {draft.providerKeys.length} selecionado{draft.providerKeys.length === 1 ? '' : 's'}
+                  </AppText>
+                ) : null}
+              </View>
+
               {platformDisabled ? (
                 <AppText secondary style={styles.noticeText}>
-                  Este filtro não é aplicado quando a busca foi identificada
-                  como nome de um profissional.
+                  Este filtro não é aplicado quando a busca foi identificada como nome de um profissional.
                 </AppText>
               ) : providersStatus === 'loading' || providersStatus === 'idle' ? (
                 <View style={styles.providerLoading}>
@@ -380,48 +495,87 @@ export function SearchFiltersModal({
                 </View>
               ) : providersStatus === 'error' || providers.length === 0 ? (
                 <AppText secondary style={styles.noticeText}>
-                  As plataformas não puderam ser carregadas agora. Os demais
-                  filtros continuam disponíveis.
+                  As plataformas não puderam ser carregadas agora. Os demais filtros continuam disponíveis.
                 </AppText>
               ) : (
                 <>
-                  <AppText secondary style={styles.helperText}>
-                    A verificação pode levar alguns segundos, pois considera a
-                    disponibilidade de cada resultado no Brasil.
-                  </AppText>
+                  {myStreamingProviderKeys.length > 0 ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={useMyStreamings}
+                      style={({ pressed }) => [
+                        styles.secondaryAction,
+                        {
+                          backgroundColor: colors.surface,
+                          borderColor: colors.border,
+                          opacity: pressed ? 0.7 : 1,
+                        },
+                      ]}
+                    >
+                      <AppText style={styles.secondaryActionLabel}>
+                        Usar meus streamings
+                      </AppText>
+                    </Pressable>
+                  ) : (
+                    <AppText secondary style={styles.helperText}>
+                      Você pode cadastrar seus serviços em Ajustes → Meus streamings.
+                    </AppText>
+                  )}
+
                   <View style={styles.choices}>
-                    <ChoiceChip
-                      label="Todas"
-                      onSelect={() =>
-                        setDraft((current) => ({
-                          ...current,
-                          providerKey: undefined,
-                          availability: 'any',
-                        }))
-                      }
-                      selectedValue={draft.providerKey}
-                      value={undefined}
-                    />
-                    {providers.map((provider) => (
-                      <ChoiceChip
+                    {providerOptions.map((provider) => (
+                      <MultiChoiceChip
+                        disabled={!isProviderAvailable(provider, draft.mediaType)}
                         key={provider.key}
                         label={provider.name}
-                        onSelect={(providerKey) =>
-                          setDraft((current) => ({
-                            ...current,
-                            providerKey,
-                          }))
-                        }
-                        selectedValue={draft.providerKey}
-                        value={provider.key}
+                        onPress={() => toggleProvider(provider.key)}
+                        selected={selectedProviderKeySet.has(provider.key)}
                       />
                     ))}
                   </View>
+
+                  {hiddenProviderCount > 0 || showAllProviders ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() => setShowAllProviders((current) => !current)}
+                      style={({ pressed }) => [
+                        styles.textAction,
+                        { opacity: pressed ? 0.65 : 1 },
+                      ]}
+                    >
+                      <AppText style={[styles.textActionLabel, { color: colors.primary }]}> 
+                        {showAllProviders
+                          ? 'Mostrar somente meus streamings e selecionados'
+                          : `Adicionar streaming (${hiddenProviderCount})`}
+                      </AppText>
+                    </Pressable>
+                  ) : null}
+
+                  {draft.providerKeys.length > 0 ? (
+                    <Pressable
+                      accessibilityRole="button"
+                      onPress={() =>
+                        setDraft((current) => ({
+                          ...current,
+                          providerKeys: [],
+                          availability: 'any',
+                        }))
+                      }
+                      style={({ pressed }) => [
+                        styles.textAction,
+                        { opacity: pressed ? 0.65 : 1 },
+                      ]}
+                    >
+                      <AppText secondary style={styles.textActionLabel}>
+                        Limpar streamings selecionados
+                      </AppText>
+                    </Pressable>
+                  ) : null}
                 </>
               )}
             </View>
 
-            {!platformDisabled && selectedProvider ? (
+            {!platformDisabled && draft.providerKeys.length > 0 ? (
               <View style={styles.section}>
                 <AppText style={styles.sectionTitle}>Disponibilidade</AppText>
                 <View style={styles.choices}>
@@ -441,13 +595,13 @@ export function SearchFiltersModal({
             ) : null}
 
             {validationMessage ? (
-              <AppText style={[styles.validation, { color: colors.primary }]}>
+              <AppText style={[styles.validation, { color: colors.primary }]}> 
                 {validationMessage}
               </AppText>
             ) : null}
           </ScrollView>
 
-          <View style={[styles.actions, { borderColor: colors.border }]}>
+          <View style={[styles.actions, { borderColor: colors.border }]}> 
             <Pressable
               accessibilityRole="button"
               onPress={clearFilters}
@@ -543,22 +697,31 @@ const styles = StyleSheet.create({
   section: {
     gap: 10,
   },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  sectionHeaderText: {
+    flex: 1,
+    gap: 6,
+  },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   helperText: {
     fontSize: 12,
-    lineHeight: 18,
-  },
-  providerLoading: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+    lineHeight: 17,
   },
   noticeText: {
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  selectionCount: {
+    fontSize: 11,
+    fontWeight: '800',
   },
   choices: {
     flexDirection: 'row',
@@ -574,12 +737,12 @@ const styles = StyleSheet.create({
   },
   choiceLabel: {
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   selectedLabel: {
     color: '#FFFFFF',
   },
-  yearFields: {
+  yearRow: {
     flexDirection: 'row',
     gap: 12,
   },
@@ -592,34 +755,59 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   input: {
-    minHeight: 48,
+    minHeight: 50,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 13,
     paddingHorizontal: 14,
     fontSize: 15,
   },
-  validation: {
+  providerLoading: {
+    minHeight: 42,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  secondaryAction: {
+    minHeight: 42,
+    alignSelf: 'flex-start',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderRadius: 13,
+    paddingHorizontal: 14,
+  },
+  secondaryActionLabel: {
     fontSize: 13,
+    fontWeight: '800',
+  },
+  textAction: {
+    minHeight: 32,
+    alignSelf: 'flex-start',
+    justifyContent: 'center',
+  },
+  textActionLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  validation: {
+    fontSize: 12,
     fontWeight: '700',
-    lineHeight: 19,
+    lineHeight: 18,
   },
   actions: {
     flexDirection: 'row',
     gap: 10,
     borderTopWidth: 1,
     paddingHorizontal: 20,
-    paddingTop: 14,
-    paddingBottom: 22,
+    paddingVertical: 14,
   },
   actionButton: {
-    minHeight: 48,
+    minHeight: 50,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 13,
+    borderRadius: 14,
     paddingHorizontal: 16,
   },
   clearButton: {
-    minWidth: 104,
     borderWidth: 1,
   },
   applyButton: {
@@ -627,7 +815,7 @@ const styles = StyleSheet.create({
   },
   clearLabel: {
     fontSize: 14,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   applyLabel: {
     color: '#FFFFFF',

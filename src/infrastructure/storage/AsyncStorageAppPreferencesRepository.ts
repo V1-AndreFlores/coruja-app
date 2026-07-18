@@ -8,6 +8,14 @@ function isThemeMode(value: unknown): value is AppThemeMode {
   return value === 'dark' || value === 'light';
 }
 
+function normalizeProviderKeys(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return [...new Set(value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0))];
+}
+
 export class AsyncStorageAppPreferencesRepository
   implements AppPreferencesRepository
 {
@@ -20,5 +28,20 @@ export class AsyncStorageAppPreferencesRepository
 
   async setThemeMode(mode: AppThemeMode): Promise<void> {
     await this.store.write(STORAGE_KEYS.themeMode, mode);
+  }
+
+  async getStreamingProviderKeys(): Promise<string[]> {
+    const storedKeys = await this.store.read<unknown>(
+      STORAGE_KEYS.streamingProviderKeys,
+      [],
+    );
+    return normalizeProviderKeys(storedKeys);
+  }
+
+  async setStreamingProviderKeys(providerKeys: string[]): Promise<void> {
+    await this.store.write(
+      STORAGE_KEYS.streamingProviderKeys,
+      normalizeProviderKeys(providerKeys),
+    );
   }
 }

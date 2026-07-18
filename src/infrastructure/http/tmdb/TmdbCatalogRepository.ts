@@ -34,12 +34,11 @@ import {
   mapTvDetails,
 } from './TmdbMappers';
 
-type PreferredProvider = {
+type CanonicalProvider = {
   key: string;
   name: string;
   aliases: string[];
 };
-
 
 const CATALOG_REQUEST_OPTIONS = {
   timeoutMs: TMDB.catalogRequestTimeoutMs,
@@ -53,7 +52,7 @@ const DETAILS_REQUEST_OPTIONS = {
   retryDelayMs: TMDB.detailsRequestRetryDelayMs,
 } as const;
 
-const PREFERRED_PROVIDERS: PreferredProvider[] = [
+const CANONICAL_PROVIDERS: CanonicalProvider[] = [
   { key: 'netflix', name: 'Netflix', aliases: ['Netflix'] },
   {
     key: 'prime-video',
@@ -62,12 +61,8 @@ const PREFERRED_PROVIDERS: PreferredProvider[] = [
   },
   { key: 'disney-plus', name: 'Disney+', aliases: ['Disney Plus'] },
   { key: 'max', name: 'Max', aliases: ['Max', 'HBO Max'] },
+  { key: 'apple-tv-plus', name: 'Apple TV+', aliases: ['Apple TV Plus'] },
   { key: 'globoplay', name: 'Globoplay', aliases: ['Globoplay'] },
-  {
-    key: 'apple-tv-plus',
-    name: 'Apple TV+',
-    aliases: ['Apple TV Plus'],
-  },
   {
     key: 'paramount-plus',
     name: 'Paramount+',
@@ -117,15 +112,57 @@ function isLikelyPersonMatch(
   );
 }
 
-function findProviderByAliases(
-  providers: TmdbWatchProviderDto[],
-  aliases: string[],
-): TmdbWatchProviderDto | undefined {
-  const normalizedAliases = aliases.map(normalizeText);
+function findCanonicalProvider(
+  providerName: string,
+): CanonicalProvider | undefined {
+  const normalizedName = normalizeText(providerName);
 
-  return providers.find((provider) =>
-    normalizedAliases.includes(normalizeText(provider.provider_name)),
+  return CANONICAL_PROVIDERS.find((provider) =>
+    provider.aliases.some((alias) => normalizeText(alias) === normalizedName),
   );
+}
+
+function createProviderKey(providerName: string): string {
+  return (
+    findCanonicalProvider(providerName)?.key ??
+    normalizeText(providerName).replace(/\s+/g, '-')
+  );
+}
+
+function createProviderName(providerName: string): string {
+  return findCanonicalProvider(providerName)?.name ?? providerName.trim();
+}
+
+function getPreferredProviderIndex(providerKey: string): number {
+  const index = CANONICAL_PROVIDERS.findIndex(
+    (provider) => provider.key === providerKey,
+  );
+
+  return index >= 0 ? index : Number.MAX_SAFE_INTEGER;
+}
+
+function interleaveCatalogItems(
+  movies: CatalogItemSummary[],
+  tvShows: CatalogItemSummary[],
+  limit = 40,
+): CatalogItemSummary[] {
+  const items: CatalogItemSummary[] = [];
+  const maxLength = Math.max(movies.length, tvShows.length);
+
+  for (let index = 0; index < maxLength && items.length < limit; index += 1) {
+    const movie = movies[index];
+    const tvShow = tvShows[index];
+
+    if (movie) {
+      items.push(movie);
+    }
+
+    if (tvShow && items.length < limit) {
+      items.push(tvShow);
+    }
+  }
+
+  return items;
 }
 
 export class TmdbCatalogRepository implements CatalogRepository {
@@ -228,7 +265,7 @@ export class TmdbCatalogRepository implements CatalogRepository {
       filters,
     );
 
-    if (filters.providerKey && !matchedPerson) {
+    if (filters.providerKeys.length > 0 && !matchedPerson) {
       filteredDirectResults = await this.filterByWatchProvider(
         filteredDirectResults,
         filters,
@@ -244,6 +281,43 @@ export class TmdbCatalogRepository implements CatalogRepository {
       matchedPersonName: matchedPerson?.name,
     };
 
+    this.cache.set(cacheKey, response, TMDB.searchCacheTtlMs);
+    return response;
+  }
+
+  async discover(
+    filters: SearchFilters,
+    signal?: AbortSignal,
+  ): Promise<CatalogSearchResponse> {
+    const cacheKey = `discover:${JSON.stringify(filters)}`;
+    const cached = this.cache.get<CatalogSearchResponse>(cacheKey);
+
+    if (cached) {
+      return cached;
+    }
+
+    const providers =
+      filters.providerKeys.length > 0
+        ? await this.getWatchProviderOptions(signal)
+        : [];
+
+    const requests: Array<Promise<CatalogItemSummary[]>> = [];
+
+    if (filters.mediaType === 'all' || filters.mediaType === 'movie') {
+      requests.push(this.discoverMediaType('movie', filters, providers, signal));
+    }
+
+    if (filters.mediaType === 'all' || filters.mediaType === 'tv') {
+      requests.push(this.discoverMediaType('tv', filters, providers, signal));
+    }
+
+    const results = await Promise.all(requests);
+    const items =
+      filters.mediaType === 'all'
+        ? interleaveCatalogItems(results[0] ?? [], results[1] ?? [])
+        : results[0] ?? [];
+
+    const response: CatalogSearchResponse = { items };
     this.cache.set(cacheKey, response, TMDB.searchCacheTtlMs);
     return response;
   }
@@ -278,25 +352,47 @@ export class TmdbCatalogRepository implements CatalogRepository {
       ),
     ]);
 
-    const options = PREFERRED_PROVIDERS.map((preferred) => {
-      const movieProvider = findProviderByAliases(
-        movieResponse.results,
-        preferred.aliases,
-      );
-      const tvProvider = findProviderByAliases(
-        tvResponse.results,
-        preferred.aliases,
-      );
+    const providerMap = new Map<string, WatchProviderOption>();
 
-      return {
-        key: preferred.key,
-        name: preferred.name,
-        movieProviderId: movieProvider?.provider_id,
-        tvProviderId: tvProvider?.provider_id,
-      } satisfies WatchProviderOption;
-    }).filter(
-      (provider) => provider.movieProviderId || provider.tvProviderId,
-    );
+    const mergeProvider = (
+      provider: TmdbWatchProviderDto,
+      mediaType: MediaType,
+    ) => {
+      const key = createProviderKey(provider.provider_name);
+      const current = providerMap.get(key);
+      const next: WatchProviderOption = {
+        key,
+        name: createProviderName(provider.provider_name),
+        logoPath: current?.logoPath ?? provider.logo_path ?? null,
+        displayPriority: Math.min(
+          current?.displayPriority ?? Number.MAX_SAFE_INTEGER,
+          provider.display_priority ?? Number.MAX_SAFE_INTEGER,
+        ),
+        movieProviderId:
+          mediaType === 'movie' ? provider.provider_id : current?.movieProviderId,
+        tvProviderId:
+          mediaType === 'tv' ? provider.provider_id : current?.tvProviderId,
+      };
+
+      providerMap.set(key, next);
+    };
+
+    movieResponse.results.forEach((provider) => mergeProvider(provider, 'movie'));
+    tvResponse.results.forEach((provider) => mergeProvider(provider, 'tv'));
+
+    const options = [...providerMap.values()].sort((left, right) => {
+      const preferredDifference =
+        getPreferredProviderIndex(left.key) - getPreferredProviderIndex(right.key);
+
+      if (preferredDifference !== 0) {
+        return preferredDifference;
+      }
+
+      const priorityDifference = left.displayPriority - right.displayPriority;
+      return priorityDifference !== 0
+        ? priorityDifference
+        : left.name.localeCompare(right.name, 'pt-BR');
+    });
 
     this.cache.set(cacheKey, options, TMDB.catalogCacheTtlMs);
     return options;
@@ -321,6 +417,80 @@ export class TmdbCatalogRepository implements CatalogRepository {
 
     this.cache.set(cacheKey, details, TMDB.detailsCacheTtlMs);
     return details;
+  }
+
+  private async discoverMediaType(
+    mediaType: MediaType,
+    filters: SearchFilters,
+    providers: WatchProviderOption[],
+    signal?: AbortSignal,
+  ): Promise<CatalogItemSummary[]> {
+    const params: Record<string, string | number | boolean> = {
+      include_adult: false,
+      language: TMDB.language,
+      page: 1,
+      sort_by: 'popularity.desc',
+    };
+
+    if (filters.genre) {
+      const genreIds = getGenreIdsForMediaType(filters.genre, mediaType);
+      if (genreIds.length === 0) {
+        return [];
+      }
+      params.with_genres = genreIds.join('|');
+    }
+
+    if (filters.yearFrom) {
+      params[
+        mediaType === 'movie'
+          ? 'primary_release_date.gte'
+          : 'first_air_date.gte'
+      ] = `${filters.yearFrom}-01-01`;
+    }
+
+    if (filters.yearTo) {
+      params[
+        mediaType === 'movie'
+          ? 'primary_release_date.lte'
+          : 'first_air_date.lte'
+      ] = `${filters.yearTo}-12-31`;
+    }
+
+    if (filters.minimumRating) {
+      params['vote_average.gte'] = filters.minimumRating;
+      params['vote_count.gte'] = 20;
+    }
+
+    if (filters.providerKeys.length > 0) {
+      const providerIds = providers
+        .filter((provider) => filters.providerKeys.includes(provider.key))
+        .map((provider) =>
+          mediaType === 'movie'
+            ? provider.movieProviderId
+            : provider.tvProviderId,
+        )
+        .filter((providerId): providerId is number => Boolean(providerId));
+
+      if (providerIds.length === 0) {
+        return [];
+      }
+
+      params.watch_region = TMDB.region;
+      params.with_watch_providers = [...new Set(providerIds)].join('|');
+
+      if (filters.availability !== 'any') {
+        params.with_watch_monetization_types = filters.availability;
+      }
+    }
+
+    return this.getCatalogPage(
+      `discover:${mediaType}:${JSON.stringify(filters)}`,
+      `/discover/${mediaType}`,
+      params,
+      mediaType,
+      TMDB.searchCacheTtlMs,
+      signal,
+    );
   }
 
   private applyLocalFilters(
@@ -381,27 +551,30 @@ export class TmdbCatalogRepository implements CatalogRepository {
     filters: SearchFilters,
     signal?: AbortSignal,
   ): Promise<CatalogItemSummary[]> {
-    if (!filters.providerKey) {
+    if (filters.providerKeys.length === 0) {
       return items;
     }
 
     const providers = await this.getWatchProviderOptions(signal);
-    const selectedProvider = providers.find(
-      (provider) => provider.key === filters.providerKey,
+    const selectedProviders = providers.filter((provider) =>
+      filters.providerKeys.includes(provider.key),
     );
 
-    if (!selectedProvider) {
+    if (selectedProviders.length === 0) {
       return [];
     }
 
     const matches = await Promise.all(
       items.map(async (item) => {
-        const providerId =
-          item.mediaType === 'movie'
-            ? selectedProvider.movieProviderId
-            : selectedProvider.tvProviderId;
+        const selectedProviderIds = selectedProviders
+          .map((provider) =>
+            item.mediaType === 'movie'
+              ? provider.movieProviderId
+              : provider.tvProviderId,
+          )
+          .filter((providerId): providerId is number => Boolean(providerId));
 
-        if (!providerId) {
+        if (selectedProviderIds.length === 0) {
           return false;
         }
 
@@ -422,7 +595,9 @@ export class TmdbCatalogRepository implements CatalogRepository {
             : [brazil[filters.availability]];
 
         return groups.some((group) =>
-          group?.some((provider) => provider.provider_id === providerId),
+          group?.some((provider) =>
+            selectedProviderIds.includes(provider.provider_id),
+          ),
         );
       }),
     );

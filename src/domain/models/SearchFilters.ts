@@ -24,13 +24,15 @@ export type SearchFilters = {
   yearFrom?: number;
   yearTo?: number;
   minimumRating?: number;
-  providerKey?: string;
+  providerKeys: string[];
   availability: SearchAvailability;
 };
 
 export type WatchProviderOption = {
   key: string;
   name: string;
+  logoPath?: string | null;
+  displayPriority: number;
   movieProviderId?: number;
   tvProviderId?: number;
 };
@@ -42,5 +44,6 @@ export type CatalogSearchResponse = {
 
 export const DEFAULT_SEARCH_FILTERS: SearchFilters = {
   mediaType: 'all',
+  providerKeys: [],
   availability: 'any',
 };

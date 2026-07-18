@@ -48,6 +48,7 @@ coruja-app/
 │   │   ├── history.tsx
 │   │   ├── about.tsx
 │   │   ├── data-management.tsx
+│   │   ├── streaming-services.tsx
 │   │   ├── _layout.tsx
 │   │   ├── +not-found.tsx
 │   │   ├── home.tsx
@@ -83,6 +84,8 @@ coruja-app/
 │   │   │   ├── useLocalDataManagement.ts
 │   │   │   ├── useLocalLibraryList.ts
 │   │   │   └── useTitleDetails.ts
+│   │   ├── preferences/
+│   │   │   └── StreamingPreferencesProvider.tsx
 │   │   ├── screens/
 │   │   └── theme/
 │   └── shared/
@@ -129,8 +132,10 @@ Apenas uma credencial é necessária. O token Bearer tem prioridade quando ambos
 - cancelamento com `AbortController`;
 - debounce de 500 ms na pesquisa;
 - busca simultânea por título e por nome de profissional;
-- filtros locais por tipo, gênero, período e avaliação mínima;
-- consulta de plataformas disponíveis no Brasil somente quando o usuário seleciona esse filtro;
+- filtros locais por tipo, gênero, período e avaliação mínima nas buscas textuais;
+- exploração sem texto pelos endpoints `/discover/movie` e `/discover/tv`;
+- consulta dinâmica dos provedores disponíveis no Brasil;
+- seleção de múltiplos streamings com lógica OR e persistência de “Meus streamings”;
 - etiquetas removíveis para filtros ativos e estado mantido durante a sessão;
 - consulta dos créditos combinados da pessoa mais relevante;
 - exclusão de resultados adultos;
@@ -152,6 +157,8 @@ GET /tv/popular
 GET /search/multi
 GET /search/person
 GET /person/{id}/combined_credits
+GET /discover/movie
+GET /discover/tv
 GET /watch/providers/movie
 GET /watch/providers/tv
 GET /movie/{id}
@@ -167,7 +174,9 @@ Os detalhes de filme usam `append_to_response=credits,release_dates`; os detalhe
 
 As consultas usam `pt-BR`; filmes populares usam também a região `BR`. Na busca, `/search/multi` fornece os resultados diretos por título e `/search/person` identifica a pessoa mais relevante. Quando encontrada, `/person/{id}/combined_credits` retorna os trabalhos de elenco e equipe técnica. A apresentação recebe somente filmes e séries.
 
-Tipo, gênero, intervalo de lançamento e avaliação mínima são aplicados sobre os resultados mapeados. As opções de streaming são obtidas das listas de provedores de filmes e séries para a região `BR`. Quando uma plataforma é selecionada em uma busca por título, a disponibilidade é verificada nos endpoints de cada resultado e armazenada em cache. Esse filtro é desabilitado em buscas identificadas como nome de profissional para impedir uma multiplicação excessiva de requisições sobre os créditos combinados.
+Tipo, gênero, intervalo de lançamento e avaliação mínima são aplicados sobre os resultados mapeados nas buscas textuais. Quando o campo está vazio e existe ao menos um filtro, `/discover/movie` e `/discover/tv` executam a exploração diretamente no catálogo.
+
+As opções de streaming são obtidas dinamicamente das listas de provedores de filmes e séries para a região `BR`. Vários provedores são enviados com separador `|`, aplicando lógica OR: o título pode estar em qualquer um dos serviços selecionados. Em buscas textuais por título, a disponibilidade é confirmada nos endpoints de cada resultado e armazenada em cache. Em buscas identificadas como nome de profissional, o filtro de streaming não é aplicado para impedir uma multiplicação excessiva de requisições sobre os créditos combinados.
 
 ## Imagens
 
@@ -211,7 +220,7 @@ O tema escuro é o padrão inicial. A preferência é carregada antes da saída 
 
 ## Persistência local
 
-- `AppPreferencesRepository`: preferências do aplicativo;
+- `AppPreferencesRepository`: tema e streamings selecionados pelo usuário;
 - `LocalLibraryRepository`: favoritos, Quero assistir e histórico;
 - `AsyncStorageJsonStore`: serialização JSON e tratamento centralizado;
 - implementações `AsyncStorage*`: adaptadores concretos.
@@ -262,7 +271,7 @@ LocalLibraryRepository
 AsyncStorageLocalLibraryRepository
 ```
 
-A tela consulta as quantidades de Favoritos, Quero assistir e histórico. Cada coleção pode ser limpa separadamente ou em conjunto. Todas as operações destrutivas exigem confirmação, atualizam os contadores imediatamente e preservam a preferência de tema.
+A tela consulta as quantidades de Favoritos, Quero assistir e histórico. Cada coleção pode ser limpa separadamente ou em conjunto. Todas as operações destrutivas exigem confirmação, atualizam os contadores imediatamente e preservam as preferências de tema e streamings.
 
 ## Sobre, créditos e privacidade
 
@@ -294,10 +303,10 @@ A tela consulta as quantidades de Favoritos, Quero assistir e histórico. Cada c
 22. O gerenciamento de dados permite limpeza seletiva ou completa de Favoritos, Quero assistir e histórico, preservando o tema.
 23. Falhas de escrita e remoção no AsyncStorage são propagadas para que a interface possa informar o erro.
 24. A área Sobre concentra créditos, contato e privacidade; a tela Ajustes funciona como índice de navegação.
-25. Os filtros de busca priorizam simplicidade: um tipo, um gênero, um período, uma nota mínima e uma plataforma por vez.
-26. Os filtros permanecem apenas durante a sessão e não são gravados no AsyncStorage.
-27. A verificação por plataforma é feita somente em buscas por título e usa cache por `mediaType:id`.
-28. Em buscas por profissional, plataforma e disponibilidade são removidas para limitar chamadas ao TMDB.
+25. Os filtros de busca priorizam simplicidade: um tipo, um gênero, um período, uma nota mínima e múltiplos streamings opcionais.
+26. Os filtros da pesquisa permanecem durante a sessão; somente a configuração “Meus streamings” é gravada no AsyncStorage.
+27. Sem texto, filtros ativos usam `/discover/movie` e `/discover/tv`; os provedores selecionados são combinados com lógica OR.
+28. Em buscas textuais por título, a verificação por streaming usa cache por `mediaType:id`; em buscas por profissional, streaming e disponibilidade não são aplicados.
 29. A primeira carga de Início, Busca e Detalhes permanece protegida por uma película até sucesso, timeout ou erro definitivo, evitando conteúdo parcial ou vazio.
 30. Na Busca, a película cobre somente a região de resultados; o termo e os filtros continuam acessíveis.
 31. Dados já carregados não são removidos durante uma atualização e exibem um indicador discreto de progresso.

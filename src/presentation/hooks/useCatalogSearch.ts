@@ -8,9 +8,24 @@ import { TMDB } from '@/shared/constants/tmdb';
 
 type SearchStatus = 'idle' | 'loading' | 'success' | 'error';
 
+function hasDiscoveryFilters(filters: SearchFilters): boolean {
+  return (
+    filters.mediaType !== 'all' ||
+    Boolean(filters.genre) ||
+    Boolean(filters.yearFrom || filters.yearTo) ||
+    Boolean(filters.minimumRating) ||
+    filters.providerKeys.length > 0 ||
+    filters.availability !== 'any'
+  );
+}
+
 export function useCatalogSearch(query: string, filters: SearchFilters) {
   const normalizedQuery = query.trim();
-  const previousQueryRef = useRef('');
+  const hasTextQuery = normalizedQuery.length >= 2;
+  const canDiscover = normalizedQuery.length === 0 && hasDiscoveryFilters(filters);
+  const hasSearchCriteria = hasTextQuery || canDiscover;
+  const currentCriteriaKey = `${normalizedQuery}:${JSON.stringify(filters)}`;
+  const previousCriteriaKeyRef = useRef('');
   const [items, setItems] = useState<CatalogItemSummary[]>([]);
   const [matchedPersonName, setMatchedPersonName] = useState<string>();
   const [status, setStatus] = useState<SearchStatus>('idle');
@@ -18,10 +33,10 @@ export function useCatalogSearch(query: string, filters: SearchFilters) {
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
-    const queryChanged = previousQueryRef.current !== normalizedQuery;
-    previousQueryRef.current = normalizedQuery;
+    const criteriaChanged = previousCriteriaKeyRef.current !== currentCriteriaKey;
+    previousCriteriaKeyRef.current = currentCriteriaKey;
 
-    if (normalizedQuery.length < 2) {
+    if (!hasSearchCriteria) {
       setItems([]);
       setMatchedPersonName(undefined);
       setStatus('idle');
@@ -31,7 +46,7 @@ export function useCatalogSearch(query: string, filters: SearchFilters) {
 
     const controller = new AbortController();
 
-    if (queryChanged) {
+    if (criteriaChanged) {
       setItems([]);
       setMatchedPersonName(undefined);
     }
@@ -39,9 +54,12 @@ export function useCatalogSearch(query: string, filters: SearchFilters) {
     setStatus('loading');
     setErrorMessage(undefined);
 
-    const debounceId = setTimeout(() => {
-      void catalogRepository
-        .search(normalizedQuery, filters, controller.signal)
+    const execute = () => {
+      const request = hasTextQuery
+        ? catalogRepository.search(normalizedQuery, filters, controller.signal)
+        : catalogRepository.discover(filters, controller.signal);
+
+      void request
         .then((response) => {
           if (controller.signal.aborted) {
             return;
@@ -61,13 +79,25 @@ export function useCatalogSearch(query: string, filters: SearchFilters) {
           setStatus('error');
           setErrorMessage(toCatalogErrorMessage(error));
         });
-    }, TMDB.searchDebounceMs);
+    };
+
+    const debounceId = setTimeout(
+      execute,
+      hasTextQuery ? TMDB.searchDebounceMs : 0,
+    );
 
     return () => {
       clearTimeout(debounceId);
       controller.abort();
     };
-  }, [filters, normalizedQuery, reloadKey]);
+  }, [
+    currentCriteriaKey,
+    filters,
+    hasSearchCriteria,
+    hasTextQuery,
+    normalizedQuery,
+    reloadKey,
+  ]);
 
   const retry = useCallback(() => {
     setReloadKey((current) => current + 1);
@@ -78,7 +108,8 @@ export function useCatalogSearch(query: string, filters: SearchFilters) {
     matchedPersonName,
     status,
     errorMessage,
-    hasValidQuery: normalizedQuery.length >= 2,
+    hasSearchCriteria,
+    isExploration: canDiscover,
     isInitialLoading: status === 'loading' && items.length === 0,
     isRefreshing: status === 'loading' && items.length > 0,
     retry,

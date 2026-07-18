@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 
+import { StreamingPreferencesProvider } from '@/presentation/preferences/StreamingPreferencesProvider';
 import { AppThemeProvider, useAppTheme } from '@/presentation/theme/AppThemeProvider';
 
 SplashScreen.setOptions({
@@ -28,6 +29,7 @@ function AppNavigation() {
         <Stack.Screen name="history" />
         <Stack.Screen name="about" />
         <Stack.Screen name="data-management" />
+        <Stack.Screen name="streaming-services" />
         <Stack.Screen name="title/[mediaType]/[id]" />
         <Stack.Screen name="+not-found" />
       </Stack>
@@ -38,7 +40,9 @@ function AppNavigation() {
 export default function RootLayout() {
   return (
     <AppThemeProvider>
-      <AppNavigation />
+      <StreamingPreferencesProvider>
+        <AppNavigation />
+      </StreamingPreferencesProvider>
     </AppThemeProvider>
   );
 }

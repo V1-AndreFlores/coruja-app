@@ -1,6 +1,9 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import type { SearchFilters, WatchProviderOption } from '@/domain/models/SearchFilters';
+import type {
+  SearchFilters,
+  WatchProviderOption,
+} from '@/domain/models/SearchFilters';
 import {
   getAvailabilityLabel,
   getSearchGenreLabel,
@@ -9,11 +12,10 @@ import { useAppTheme } from '@/presentation/theme/AppThemeProvider';
 
 import { AppText } from './AppText';
 
-type FilterKey =
+export type ActiveFilterKey =
   | 'mediaType'
   | 'genre'
-  | 'yearFrom'
-  | 'yearTo'
+  | 'period'
   | 'minimumRating'
   | 'providerKey'
   | 'availability';
@@ -21,11 +23,12 @@ type FilterKey =
 type ActiveSearchFiltersProps = {
   filters: SearchFilters;
   providers: WatchProviderOption[];
-  onRemove: (key: FilterKey) => void;
+  onRemove: (key: ActiveFilterKey, value?: string) => void;
 };
 
 type ActiveFilter = {
-  key: FilterKey;
+  key: ActiveFilterKey;
+  value?: string;
   label: string;
 };
 
@@ -56,7 +59,7 @@ export function ActiveSearchFilters({
         : filters.yearFrom
           ? `Desde ${filters.yearFrom}`
           : `Até ${filters.yearTo}`;
-    items.push({ key: filters.yearFrom ? 'yearFrom' : 'yearTo', label: period });
+    items.push({ key: 'period', label: period });
   }
 
   if (filters.minimumRating) {
@@ -66,15 +69,14 @@ export function ActiveSearchFilters({
     });
   }
 
-  const provider = providers.find(
-    (option) => option.key === filters.providerKey,
-  );
-  if (filters.providerKey) {
+  filters.providerKeys.forEach((providerKey) => {
+    const provider = providers.find((option) => option.key === providerKey);
     items.push({
       key: 'providerKey',
-      label: provider?.name ?? 'Plataforma',
+      value: providerKey,
+      label: provider?.name ?? 'Streaming',
     });
-  }
+  });
 
   const availabilityLabel = getAvailabilityLabel(filters.availability);
   if (availabilityLabel) {
@@ -91,8 +93,8 @@ export function ActiveSearchFilters({
         <Pressable
           accessibilityLabel={`Remover filtro ${item.label}`}
           accessibilityRole="button"
-          key={`${item.key}:${item.label}`}
-          onPress={() => onRemove(item.key)}
+          key={`${item.key}:${item.value ?? item.label}`}
+          onPress={() => onRemove(item.key, item.value)}
           style={({ pressed }) => [
             styles.chip,
             {

@@ -29,6 +29,15 @@ export function SettingsScreen() {
         <ThemeSelector />
       </SettingsCard>
 
+      <SettingsCard title="Catálogo e descoberta">
+        <SettingsLinkRow
+          description="Escolha Netflix, Prime Video, Disney+, Max, Apple TV+ e outros serviços que você possui."
+          icon="streaming"
+          onPress={() => router.push('/streaming-services')}
+          title="Meus streamings"
+        />
+      </SettingsCard>
+
       <SettingsCard title="Dados locais">
         <SettingsLinkRow
           description="Favoritos, Quero assistir e histórico ficam somente neste aparelho."
