@@ -2,6 +2,7 @@
   "expo": {
     "name": "Coruja - Sobre filmes e séries",
     "slug": "coruja-app",
+    "owner": "andre.alves",
     "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -33,13 +34,21 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#0B0F14"
+          "backgroundColor": "#0B0F14",
+          "image": "./assets/images/splash-transparent.png",
+          "imageWidth": 1,
+          "resizeMode": "contain"
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "69ff5d81-b7cf-4b80-a90e-1b4f05e06431"
+      }
     }
   }
 }
