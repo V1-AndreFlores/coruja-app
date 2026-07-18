@@ -123,7 +123,9 @@ Apenas uma credencial é necessária. O token Bearer tem prioridade quando ambos
 
 ### Proteções implementadas
 
-- timeout de 12 segundos;
+- timeout padrão de 12 segundos para catálogo e busca;
+- timeout de 20 segundos para os detalhes de filmes e séries;
+- uma repetição automática nos detalhes somente para falhas de rede e respostas HTTP 5xx;
 - cancelamento com `AbortController`;
 - debounce de 500 ms na pesquisa;
 - busca simultânea por título e por nome de profissional;
@@ -135,7 +137,8 @@ Apenas uma credencial é necessária. O token Bearer tem prioridade quando ambos
 - remoção de duplicidades entre resultados diretos e créditos;
 - cache em memória para catálogo e busca;
 - tratamento específico para HTTP 401 e 429;
-- mensagens de erro adequadas para configuração, autenticação, rede e timeout.
+- mensagens de erro adequadas para configuração, autenticação, rede, indisponibilidade temporária e timeout;
+- película bloqueante reutilizável na carga inicial dos detalhes, usando o mesmo indicador circular da Splash e mantendo o botão Voltar disponível.
 
 ## Endpoints atuais
 
@@ -292,6 +295,8 @@ A tela consulta as quantidades de Favoritos, Quero assistir e histórico. Cada c
 26. Os filtros permanecem apenas durante a sessão e não são gravados no AsyncStorage.
 27. A verificação por plataforma é feita somente em buscas por título e usa cache por `mediaType:id`.
 28. Em buscas por profissional, plataforma e disponibilidade são removidas para limitar chamadas ao TMDB.
+29. A carga inicial dos detalhes permanece bloqueada até sucesso, timeout ou erro definitivo, evitando conteúdo parcial ou vazio.
+30. As requisições de detalhes usam timeout de 20 segundos e uma única repetição automática apenas para falhas de rede ou HTTP 5xx; autenticação, limite, timeout e demais erros não são repetidos automaticamente.
 
 ## Próximas etapas técnicas
 

@@ -41,6 +41,8 @@ A aplicação contém:
 - filtro de plataforma desabilitado em buscas identificadas como nome de profissional, evitando consultas excessivas;
 - créditos de elenco e equipe técnica são unificados, sem duplicidade, e limitados aos 20 trabalhos mais relevantes;
 - timeout, cancelamento, debounce de pesquisa e cache em memória;
+- carregamento bloqueante na tela de detalhes, com o mesmo indicador circular da Splash;
+- timeout de 20 segundos e uma repetição automática para falhas temporárias de rede ou respostas HTTP 5xx nos detalhes;
 - componentes reutilizáveis para catálogo, busca e estados de tela;
 - persistência local preparada para favoritos, Quero assistir e histórico;
 - área Sobre o Coruja com versão, desenvolvimento, créditos ao TMDB, atribuição à JustWatch, contato e política de privacidade;
@@ -77,7 +79,7 @@ Infrastructure
     └── AsyncStorage repositories
 ```
 
-A camada de apresentação não conhece os contratos HTTP do TMDB. Se um backend for necessário futuramente, a implementação do repositório poderá ser substituída sem reescrever as telas. Os detalhes usam cache em memória e cancelamento de requisições ao sair da rota.
+A camada de apresentação não conhece os contratos HTTP do TMDB. Se um backend for necessário futuramente, a implementação do repositório poderá ser substituída sem reescrever as telas. Os detalhes usam cache em memória, cancelamento de requisições ao sair da rota, timeout específico de 20 segundos e uma repetição automática somente para falhas temporárias de rede ou respostas HTTP 5xx. Enquanto a carga inicial não termina, uma película bloqueante com o indicador circular da Splash evita a exibição de conteúdo incompleto.
 
 ## Pré-requisitos
 

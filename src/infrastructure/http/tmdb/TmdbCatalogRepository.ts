@@ -40,6 +40,13 @@ type PreferredProvider = {
   aliases: string[];
 };
 
+
+const DETAILS_REQUEST_OPTIONS = {
+  timeoutMs: TMDB.detailsRequestTimeoutMs,
+  retryCount: TMDB.detailsRequestRetryCount,
+  retryDelayMs: TMDB.detailsRequestRetryDelayMs,
+} as const;
+
 const PREFERRED_PROVIDERS: PreferredProvider[] = [
   { key: 'netflix', name: 'Netflix', aliases: ['Netflix'] },
   {
@@ -447,12 +454,19 @@ export class TmdbCatalogRepository implements CatalogRepository {
           append_to_response: 'credits,release_dates',
         },
         signal,
+        DETAILS_REQUEST_OPTIONS,
       ),
-      this.client.get<TmdbVideosDto>(`/movie/${id}/videos`, {}, signal),
+      this.client.get<TmdbVideosDto>(
+        `/movie/${id}/videos`,
+        {},
+        signal,
+        DETAILS_REQUEST_OPTIONS,
+      ),
       this.client.get<TmdbWatchProvidersDto>(
         `/movie/${id}/watch/providers`,
         {},
         signal,
+        DETAILS_REQUEST_OPTIONS,
       ),
     ]);
 
@@ -472,17 +486,25 @@ export class TmdbCatalogRepository implements CatalogRepository {
           append_to_response: 'content_ratings',
         },
         signal,
+        DETAILS_REQUEST_OPTIONS,
       ),
       this.client.get<TmdbCreditsDto>(
         `/tv/${id}/aggregate_credits`,
         { language: TMDB.language },
         signal,
+        DETAILS_REQUEST_OPTIONS,
       ),
-      this.client.get<TmdbVideosDto>(`/tv/${id}/videos`, {}, signal),
+      this.client.get<TmdbVideosDto>(
+        `/tv/${id}/videos`,
+        {},
+        signal,
+        DETAILS_REQUEST_OPTIONS,
+      ),
       this.client.get<TmdbWatchProvidersDto>(
         `/tv/${id}/watch/providers`,
         {},
         signal,
+        DETAILS_REQUEST_OPTIONS,
       ),
     ]);
 

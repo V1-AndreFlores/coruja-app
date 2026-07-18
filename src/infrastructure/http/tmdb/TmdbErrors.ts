@@ -31,6 +31,14 @@ export function toCatalogErrorMessage(error: unknown): string {
       case 'network':
         return 'Não foi possível acessar o catálogo. Verifique sua conexão com a internet.';
       default:
+        if (
+          typeof error.status === 'number' &&
+          error.status >= 500 &&
+          error.status <= 599
+        ) {
+          return 'O TMDB está temporariamente indisponível. Tente novamente em alguns instantes.';
+        }
+
         return 'Não foi possível carregar o catálogo neste momento.';
     }
   }

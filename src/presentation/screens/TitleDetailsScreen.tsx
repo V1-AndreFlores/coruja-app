@@ -14,6 +14,7 @@ import {
 import type { MediaType } from '@/domain/models/CatalogItemSummary';
 import type { TitleDetails } from '@/domain/models/TitleDetails';
 import { AppIcon } from '@/presentation/components/AppIcon';
+import { AppLoadingOverlay } from '@/presentation/components/AppLoadingOverlay';
 import { AppScreen } from '@/presentation/components/AppScreen';
 import { AppSectionHeader } from '@/presentation/components/AppSectionHeader';
 import { AppStateView } from '@/presentation/components/AppStateView';
@@ -123,8 +124,23 @@ export function TitleDetailsScreen({
 
   if (status === 'loading') {
     return (
-      <AppScreen contentStyle={styles.noPadding} scroll>
+      <AppScreen contentStyle={styles.loadingContainer}>
         <TitleDetailsSkeleton />
+        <AppLoadingOverlay message="Carregando informações. Aguarde..." />
+        <Pressable
+          accessibilityLabel="Voltar"
+          accessibilityRole="button"
+          onPress={goBack}
+          style={({ pressed }) => [
+            styles.loadingBack,
+            {
+              backgroundColor: colors.surface,
+              opacity: pressed ? 0.72 : 1,
+            },
+          ]}
+        >
+          <AppIcon color={colors.text} name="back" size={24} />
+        </Pressable>
       </AppScreen>
     );
   }
@@ -465,6 +481,22 @@ export function TitleDetailsScreen({
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    paddingHorizontal: 0,
+    paddingTop: 0,
+  },
+  loadingBack: {
+    position: 'absolute',
+    top: 16,
+    left: 18,
+    zIndex: 30,
+    elevation: 30,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 22,
+  },
   noPadding: {
     paddingHorizontal: 0,
     paddingTop: 0,
