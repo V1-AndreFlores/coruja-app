@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Modal,
   Pressable,
   ScrollView,
@@ -371,9 +372,12 @@ export function SearchFiltersModal({
                   como nome de um profissional.
                 </AppText>
               ) : providersStatus === 'loading' || providersStatus === 'idle' ? (
-                <AppText secondary style={styles.helperText}>
-                  Carregando plataformas disponíveis no Brasil...
-                </AppText>
+                <View style={styles.providerLoading}>
+                  <ActivityIndicator color={colors.primary} size="small" />
+                  <AppText secondary style={styles.helperText}>
+                    Carregando plataformas disponíveis no Brasil...
+                  </AppText>
+                </View>
               ) : providersStatus === 'error' || providers.length === 0 ? (
                 <AppText secondary style={styles.noticeText}>
                   As plataformas não puderam ser carregadas agora. Os demais
@@ -546,6 +550,11 @@ const styles = StyleSheet.create({
   helperText: {
     fontSize: 12,
     lineHeight: 18,
+  },
+  providerLoading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   noticeText: {
     fontSize: 13,

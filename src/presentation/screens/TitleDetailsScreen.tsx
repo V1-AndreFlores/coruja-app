@@ -19,6 +19,7 @@ import { AppScreen } from '@/presentation/components/AppScreen';
 import { AppSectionHeader } from '@/presentation/components/AppSectionHeader';
 import { AppStateView } from '@/presentation/components/AppStateView';
 import { AppText } from '@/presentation/components/AppText';
+import { AppUpdatingIndicator } from '@/presentation/components/AppUpdatingIndicator';
 import { CatalogPoster } from '@/presentation/components/CatalogPoster';
 import { PersonCard } from '@/presentation/components/PersonCard';
 import { SeasonCard } from '@/presentation/components/SeasonCard';
@@ -122,7 +123,7 @@ export function TitleDetailsScreen({
     }
   };
 
-  if (status === 'loading') {
+  if (status === 'loading' && !details) {
     return (
       <AppScreen contentStyle={styles.loadingContainer}>
         <TitleDetailsSkeleton />
@@ -145,7 +146,7 @@ export function TitleDetailsScreen({
     );
   }
 
-  if (status === 'error' || !details) {
+  if (!details) {
     return (
       <AppScreen contentStyle={styles.errorContainer}>
         <Pressable
@@ -255,6 +256,24 @@ export function TitleDetailsScreen({
       </ImageBackground>
 
       <View style={styles.mainContent}>
+        {status === 'loading' ? (
+          <AppUpdatingIndicator message="Atualizando informações..." />
+        ) : null}
+
+        {status === 'error' && errorMessage ? (
+          <View
+            style={[
+              styles.refreshError,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
+            <AppText secondary style={styles.refreshErrorText}>
+              Não foi possível atualizar os dados agora. As informações já
+              carregadas continuam disponíveis.
+            </AppText>
+          </View>
+        ) : null}
+
         <View style={styles.actions}>
           <TitleActionButton
             disabled={isUpdatingLibrary}
@@ -608,6 +627,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 22,
     paddingBottom: 40,
+  },
+  refreshError: {
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  refreshErrorText: {
+    fontSize: 12,
+    lineHeight: 18,
   },
   actions: {
     flexDirection: 'row',

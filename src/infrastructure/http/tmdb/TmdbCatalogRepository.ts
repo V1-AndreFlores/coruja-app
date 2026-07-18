@@ -41,6 +41,12 @@ type PreferredProvider = {
 };
 
 
+const CATALOG_REQUEST_OPTIONS = {
+  timeoutMs: TMDB.catalogRequestTimeoutMs,
+  retryCount: TMDB.catalogRequestRetryCount,
+  retryDelayMs: TMDB.catalogRequestRetryDelayMs,
+} as const;
+
 const DETAILS_REQUEST_OPTIONS = {
   timeoutMs: TMDB.detailsRequestTimeoutMs,
   retryCount: TMDB.detailsRequestRetryCount,
@@ -186,11 +192,13 @@ export class TmdbCatalogRepository implements CatalogRepository {
         '/search/multi',
         searchParams,
         signal,
+        CATALOG_REQUEST_OPTIONS,
       ),
       this.client.get<TmdbPagedResponse<TmdbPersonSearchResultDto>>(
         '/search/person',
         searchParams,
         signal,
+        CATALOG_REQUEST_OPTIONS,
       ),
     ]);
 
@@ -260,11 +268,13 @@ export class TmdbCatalogRepository implements CatalogRepository {
         '/watch/providers/movie',
         params,
         signal,
+        CATALOG_REQUEST_OPTIONS,
       ),
       this.client.get<TmdbWatchProviderListDto>(
         '/watch/providers/tv',
         params,
         signal,
+        CATALOG_REQUEST_OPTIONS,
       ),
     ]);
 
@@ -436,6 +446,7 @@ export class TmdbCatalogRepository implements CatalogRepository {
       `/${mediaType}/${id}/watch/providers`,
       {},
       signal,
+      CATALOG_REQUEST_OPTIONS,
     );
 
     this.cache.set(cacheKey, response, TMDB.detailsCacheTtlMs);
@@ -520,6 +531,7 @@ export class TmdbCatalogRepository implements CatalogRepository {
       `/person/${personId}/combined_credits`,
       { language: TMDB.language },
       signal,
+      CATALOG_REQUEST_OPTIONS,
     );
 
     return mapTmdbPersonCredits(response, TMDB.personCreditsLimit);
@@ -558,7 +570,7 @@ export class TmdbCatalogRepository implements CatalogRepository {
 
     const response = await this.client.get<
       TmdbPagedResponse<TmdbCatalogItemDto>
-    >(path, params, signal);
+    >(path, params, signal, CATALOG_REQUEST_OPTIONS);
 
     const items = response.results
       .filter((item) => item.adult !== true)

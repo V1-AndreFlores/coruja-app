@@ -41,8 +41,11 @@ A aplicação contém:
 - filtro de plataforma desabilitado em buscas identificadas como nome de profissional, evitando consultas excessivas;
 - créditos de elenco e equipe técnica são unificados, sem duplicidade, e limitados aos 20 trabalhos mais relevantes;
 - timeout, cancelamento, debounce de pesquisa e cache em memória;
-- carregamento bloqueante na tela de detalhes, com o mesmo indicador circular da Splash;
-- timeout de 20 segundos e uma repetição automática para falhas temporárias de rede ou respostas HTTP 5xx nos detalhes;
+- carregamento bloqueante padronizado na primeira carga de Início, Busca e Detalhes, usando o mesmo indicador circular da Splash;
+- campo de busca e filtros permanecem utilizáveis enquanto somente a região de resultados fica bloqueada;
+- conteúdos já carregados permanecem visíveis durante atualizações, com indicador discreto de progresso;
+- timeout de 15 segundos para catálogo, busca e plataformas, e de 20 segundos para detalhes;
+- uma repetição automática para falhas temporárias de rede ou respostas HTTP 5xx em todas as consultas ao TMDB;
 - componentes reutilizáveis para catálogo, busca e estados de tela;
 - persistência local preparada para favoritos, Quero assistir e histórico;
 - área Sobre o Coruja com versão, desenvolvimento, créditos ao TMDB, atribuição à JustWatch, contato e política de privacidade;
@@ -79,7 +82,7 @@ Infrastructure
     └── AsyncStorage repositories
 ```
 
-A camada de apresentação não conhece os contratos HTTP do TMDB. Se um backend for necessário futuramente, a implementação do repositório poderá ser substituída sem reescrever as telas. Os detalhes usam cache em memória, cancelamento de requisições ao sair da rota, timeout específico de 20 segundos e uma repetição automática somente para falhas temporárias de rede ou respostas HTTP 5xx. Enquanto a carga inicial não termina, uma película bloqueante com o indicador circular da Splash evita a exibição de conteúdo incompleto.
+A camada de apresentação não conhece os contratos HTTP do TMDB. Se um backend for necessário futuramente, a implementação do repositório poderá ser substituída sem reescrever as telas. Catálogo, busca e plataformas usam timeout de 15 segundos; detalhes usam 20 segundos. Todas as consultas possuem uma repetição automática somente para falhas temporárias de rede ou respostas HTTP 5xx. Na primeira carga, uma película com o indicador circular da Splash evita conteúdo incompleto; quando já existem dados, eles permanecem visíveis com uma indicação discreta de atualização.
 
 ## Pré-requisitos
 
@@ -231,5 +234,5 @@ https://github.com/V1-AndreFlores/coruja-app
 1. incluir o logotipo oficial aprovado do TMDB na área de créditos;
 2. implementar testes automatizados dos mapeadores e repositórios;
 3. validar o fluxo completo em Android;
-4. revisar acessibilidade, estados offline e desempenho;
+4. revisar acessibilidade, estados offline, tratamento de cache e desempenho;
 5. revisar a política de privacidade publicada e preparar o AAB.

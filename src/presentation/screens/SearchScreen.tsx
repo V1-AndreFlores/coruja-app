@@ -7,11 +7,13 @@ import {
 } from '@/domain/models/SearchFilters';
 import { ActiveSearchFilters } from '@/presentation/components/ActiveSearchFilters';
 import { AppHeader } from '@/presentation/components/AppHeader';
+import { AppLoadingOverlay } from '@/presentation/components/AppLoadingOverlay';
 import { AppPageTitle } from '@/presentation/components/AppPageTitle';
 import { AppScreen } from '@/presentation/components/AppScreen';
 import { AppSearchInput } from '@/presentation/components/AppSearchInput';
 import { AppStateView } from '@/presentation/components/AppStateView';
 import { AppText } from '@/presentation/components/AppText';
+import { AppUpdatingIndicator } from '@/presentation/components/AppUpdatingIndicator';
 import { CatalogSearchResultCard } from '@/presentation/components/CatalogSearchResultCard';
 import { SearchFiltersButton } from '@/presentation/components/SearchFiltersButton';
 import { SearchFiltersModal } from '@/presentation/components/SearchFiltersModal';
@@ -43,6 +45,8 @@ export function SearchScreen() {
     status,
     errorMessage,
     hasValidQuery,
+    isInitialLoading,
+    isRefreshing,
     retry,
   } = useCatalogSearch(query, filters);
   const { options: providers, status: providersStatus } =
@@ -109,23 +113,13 @@ export function SearchScreen() {
     });
   };
 
-  const renderContent = () => {
+  const renderResults = () => {
     if (!hasValidQuery) {
       return (
         <AppStateView
           description="Digite ao menos dois caracteres para buscar filmes e séries por título ou profissional."
           title="O que você quer assistir?"
           variant="empty"
-        />
-      );
-    }
-
-    if (status === 'loading') {
-      return (
-        <AppStateView
-          description={`Procurando resultados para “${query.trim()}”.`}
-          title="Consultando catálogo"
-          variant="loading"
         />
       );
     }
@@ -138,6 +132,17 @@ export function SearchScreen() {
           onActionPress={retry}
           title="Falha na pesquisa"
           variant="error"
+        />
+      );
+    }
+
+    if (isInitialLoading) {
+      return (
+        <View
+          style={[
+            styles.loadingPlaceholder,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+          ]}
         />
       );
     }
@@ -158,6 +163,16 @@ export function SearchScreen() {
 
     return (
       <View style={styles.resultsSection}>
+        {isRefreshing ? (
+          <AppUpdatingIndicator
+            message={
+              filters.providerKey
+                ? 'Verificando disponibilidade no Brasil...'
+                : 'Atualizando resultados...'
+            }
+          />
+        ) : null}
+
         {matchedPersonName ? (
           <View
             style={[
@@ -171,9 +186,11 @@ export function SearchScreen() {
             </AppText>
           </View>
         ) : null}
+
         <AppText secondary style={styles.resultCount}>
           {items.length} {items.length === 1 ? 'resultado' : 'resultados'}
         </AppText>
+
         <View style={styles.results}>
           {items.map((item) => (
             <CatalogSearchResultCard
@@ -185,6 +202,10 @@ export function SearchScreen() {
       </View>
     );
   };
+
+  const loadingMessage = filters.providerKey
+    ? 'Verificando disponibilidade no Brasil. Aguarde...'
+    : 'Buscando filmes e séries. Aguarde...';
 
   return (
     <>
@@ -206,7 +227,13 @@ export function SearchScreen() {
             providers={providers}
           />
         </View>
-        {renderContent()}
+
+        <View style={styles.resultsRegion}>
+          {renderResults()}
+          {isInitialLoading ? (
+            <AppLoadingOverlay message={loadingMessage} />
+          ) : null}
+        </View>
       </AppScreen>
 
       <SearchFiltersModal
@@ -228,6 +255,15 @@ const styles = StyleSheet.create({
   },
   searchControls: {
     gap: 12,
+  },
+  resultsRegion: {
+    position: 'relative',
+    minHeight: 260,
+  },
+  loadingPlaceholder: {
+    minHeight: 260,
+    borderWidth: 1,
+    borderRadius: 20,
   },
   resultsSection: {
     gap: 12,

@@ -3,11 +3,13 @@ import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { AppHeader } from '@/presentation/components/AppHeader';
 import { AppIcon } from '@/presentation/components/AppIcon';
+import { AppLoadingOverlay } from '@/presentation/components/AppLoadingOverlay';
 import { AppPageTitle } from '@/presentation/components/AppPageTitle';
 import { AppScreen } from '@/presentation/components/AppScreen';
 import { AppSectionHeader } from '@/presentation/components/AppSectionHeader';
 import { AppStateView } from '@/presentation/components/AppStateView';
 import { AppText } from '@/presentation/components/AppText';
+import { AppUpdatingIndicator } from '@/presentation/components/AppUpdatingIndicator';
 import { CatalogHorizontalList } from '@/presentation/components/CatalogHorizontalList';
 import { CatalogSkeletonRow } from '@/presentation/components/CatalogSkeletonRow';
 import { useHomeCatalog } from '@/presentation/hooks/useHomeCatalog';
@@ -22,13 +24,15 @@ export function HomeScreen() {
     trending,
     popularMovies,
     popularTv,
-    isLoading,
+    hasCatalog,
+    isInitialLoading,
+    isRefreshing,
     errorMessage,
     retry,
   } = useHomeCatalog();
 
-  const renderCatalog = () => {
-    if (isLoading) {
+  const renderCatalogSections = () => {
+    if (!hasCatalog) {
       return (
         <>
           <View style={styles.section}>
@@ -44,18 +48,6 @@ export function HomeScreen() {
             <CatalogSkeletonRow />
           </View>
         </>
-      );
-    }
-
-    if (errorMessage) {
-      return (
-        <AppStateView
-          actionLabel="Tentar novamente"
-          description={errorMessage}
-          onActionPress={retry}
-          title="Catálogo indisponível"
-          variant="error"
-        />
       );
     }
 
@@ -78,6 +70,34 @@ export function HomeScreen() {
           <CatalogHorizontalList items={popularTv} />
         </View>
       </>
+    );
+  };
+
+  const renderCatalog = () => {
+    if (errorMessage && !hasCatalog) {
+      return (
+        <AppStateView
+          actionLabel="Tentar novamente"
+          description={errorMessage}
+          onActionPress={retry}
+          title="Catálogo indisponível"
+          variant="error"
+        />
+      );
+    }
+
+    return (
+      <View style={styles.catalogRegion}>
+        {isRefreshing ? (
+          <AppUpdatingIndicator message="Atualizando catálogo..." />
+        ) : null}
+
+        <View style={styles.catalogSections}>{renderCatalogSections()}</View>
+
+        {isInitialLoading ? (
+          <AppLoadingOverlay message="Carregando catálogo. Aguarde..." />
+        ) : null}
+      </View>
     );
   };
 
@@ -221,6 +241,13 @@ const styles = StyleSheet.create({
   horizontalDivider: {
     width: '100%',
     height: 1,
+  },
+  catalogRegion: {
+    position: 'relative',
+    minHeight: 520,
+  },
+  catalogSections: {
+    gap: 22,
   },
   section: {
     gap: 12,

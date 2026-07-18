@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { CatalogItemSummary } from '@/domain/models/CatalogItemSummary';
 import { catalogRepository } from '@/infrastructure/http/tmdb/repositories';
@@ -38,6 +38,10 @@ export function useHomeCatalog() {
       catalogRepository.getPopularTv(controller.signal),
     ])
       .then(([trending, popularMovies, popularTv]) => {
+        if (controller.signal.aborted) {
+          return;
+        }
+
         setState({
           trending,
           popularMovies,
@@ -64,5 +68,18 @@ export function useHomeCatalog() {
     setReloadKey((current) => current + 1);
   }, []);
 
-  return { ...state, retry };
+  return useMemo(() => {
+    const hasCatalog =
+      state.trending.length > 0 ||
+      state.popularMovies.length > 0 ||
+      state.popularTv.length > 0;
+
+    return {
+      ...state,
+      hasCatalog,
+      isInitialLoading: state.isLoading && !hasCatalog,
+      isRefreshing: state.isLoading && hasCatalog,
+      retry,
+    };
+  }, [retry, state]);
 }

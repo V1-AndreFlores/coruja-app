@@ -123,9 +123,9 @@ Apenas uma credencial é necessária. O token Bearer tem prioridade quando ambos
 
 ### Proteções implementadas
 
-- timeout padrão de 12 segundos para catálogo e busca;
+- timeout de 15 segundos para catálogo, busca e opções de plataforma;
 - timeout de 20 segundos para os detalhes de filmes e séries;
-- uma repetição automática nos detalhes somente para falhas de rede e respostas HTTP 5xx;
+- uma repetição automática em todas as consultas somente para falhas de rede e respostas HTTP 5xx;
 - cancelamento com `AbortController`;
 - debounce de 500 ms na pesquisa;
 - busca simultânea por título e por nome de profissional;
@@ -138,7 +138,10 @@ Apenas uma credencial é necessária. O token Bearer tem prioridade quando ambos
 - cache em memória para catálogo e busca;
 - tratamento específico para HTTP 401 e 429;
 - mensagens de erro adequadas para configuração, autenticação, rede, indisponibilidade temporária e timeout;
-- película bloqueante reutilizável na carga inicial dos detalhes, usando o mesmo indicador circular da Splash e mantendo o botão Voltar disponível.
+- película bloqueante reutilizável na primeira carga de Início, Busca e Detalhes, usando o mesmo indicador circular da Splash;
+- na Busca, somente a região dos resultados é bloqueada, mantendo termo e filtros utilizáveis;
+- dados já carregados permanecem visíveis durante atualizações, acompanhados por um indicador discreto;
+- carregamento das plataformas no modal de filtros possui indicador local e cancelamento ao fechar a tela.
 
 ## Endpoints atuais
 
@@ -295,8 +298,10 @@ A tela consulta as quantidades de Favoritos, Quero assistir e histórico. Cada c
 26. Os filtros permanecem apenas durante a sessão e não são gravados no AsyncStorage.
 27. A verificação por plataforma é feita somente em buscas por título e usa cache por `mediaType:id`.
 28. Em buscas por profissional, plataforma e disponibilidade são removidas para limitar chamadas ao TMDB.
-29. A carga inicial dos detalhes permanece bloqueada até sucesso, timeout ou erro definitivo, evitando conteúdo parcial ou vazio.
-30. As requisições de detalhes usam timeout de 20 segundos e uma única repetição automática apenas para falhas de rede ou HTTP 5xx; autenticação, limite, timeout e demais erros não são repetidos automaticamente.
+29. A primeira carga de Início, Busca e Detalhes permanece protegida por uma película até sucesso, timeout ou erro definitivo, evitando conteúdo parcial ou vazio.
+30. Na Busca, a película cobre somente a região de resultados; o termo e os filtros continuam acessíveis.
+31. Dados já carregados não são removidos durante uma atualização e exibem um indicador discreto de progresso.
+32. Catálogo, busca e plataformas usam timeout de 15 segundos; detalhes usam 20 segundos. Todas as consultas realizam uma única repetição automática apenas para falhas de rede ou HTTP 5xx; autenticação, limite, timeout e demais erros não são repetidos automaticamente.
 
 ## Próximas etapas técnicas
 

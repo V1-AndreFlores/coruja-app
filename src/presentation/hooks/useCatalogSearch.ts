@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { CatalogItemSummary } from '@/domain/models/CatalogItemSummary';
 import type { SearchFilters } from '@/domain/models/SearchFilters';
@@ -10,6 +10,7 @@ type SearchStatus = 'idle' | 'loading' | 'success' | 'error';
 
 export function useCatalogSearch(query: string, filters: SearchFilters) {
   const normalizedQuery = query.trim();
+  const previousQueryRef = useRef('');
   const [items, setItems] = useState<CatalogItemSummary[]>([]);
   const [matchedPersonName, setMatchedPersonName] = useState<string>();
   const [status, setStatus] = useState<SearchStatus>('idle');
@@ -17,6 +18,9 @@ export function useCatalogSearch(query: string, filters: SearchFilters) {
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
+    const queryChanged = previousQueryRef.current !== normalizedQuery;
+    previousQueryRef.current = normalizedQuery;
+
     if (normalizedQuery.length < 2) {
       setItems([]);
       setMatchedPersonName(undefined);
@@ -26,14 +30,23 @@ export function useCatalogSearch(query: string, filters: SearchFilters) {
     }
 
     const controller = new AbortController();
+
+    if (queryChanged) {
+      setItems([]);
+      setMatchedPersonName(undefined);
+    }
+
     setStatus('loading');
-    setMatchedPersonName(undefined);
     setErrorMessage(undefined);
 
     const debounceId = setTimeout(() => {
       void catalogRepository
         .search(normalizedQuery, filters, controller.signal)
         .then((response) => {
+          if (controller.signal.aborted) {
+            return;
+          }
+
           setItems(response.items);
           setMatchedPersonName(response.matchedPersonName);
           setStatus('success');
@@ -66,6 +79,8 @@ export function useCatalogSearch(query: string, filters: SearchFilters) {
     status,
     errorMessage,
     hasValidQuery: normalizedQuery.length >= 2,
+    isInitialLoading: status === 'loading' && items.length === 0,
+    isRefreshing: status === 'loading' && items.length > 0,
     retry,
   };
 }
