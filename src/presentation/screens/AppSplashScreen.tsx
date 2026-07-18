@@ -27,15 +27,15 @@ export function AppSplashScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.brandStage}>
-        <Image
-          accessibilityLabel="Coruja - Sobre filmes e séries"
-          resizeMode="contain"
-          source={require('../../../assets/images/splash-brand.png')}
-          style={styles.brand}
-        />
+      <Image
+        accessibilityLabel="Coruja - Sobre filmes e séries"
+        resizeMode="cover"
+        source={require('../../../assets/images/splash.png')}
+        style={styles.backgroundImage}
+      />
 
-        <ActivityIndicator color="#FF4B4B" size="small" style={styles.loader} />
+      <View pointerEvents="none" style={styles.loaderContainer}>
+        <ActivityIndicator color="#FF4B4B" size="large" />
       </View>
     </View>
   );
@@ -44,22 +44,19 @@ export function AppSplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: '#0B0F14',
+    overflow: 'hidden',
   },
-  brandStage: {
-    width: 320,
-    height: 320,
-  },
-  brand: {
+  backgroundImage: {
     ...StyleSheet.absoluteFill,
-    width: 320,
-    height: 320,
+    width: '100%',
+    height: '100%',
   },
-  loader: {
+  loaderContainer: {
     position: 'absolute',
-    top: 220,
-    alignSelf: 'center',
+    top: '62%',
+    right: 0,
+    left: 0,
+    alignItems: 'center',
   },
 });

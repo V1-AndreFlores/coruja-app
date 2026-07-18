@@ -190,7 +190,7 @@ Quando não há pôster, capa, foto de integrante ou logotipo de provedor, a int
 
 ## Tema
 
-O tema escuro é o padrão inicial. A preferência é carregada antes da saída da Splash e persistida localmente. A Splash nativa e a tela de Splash do React Native utilizam `assets/images/splash-brand.png` com o mesmo fundo, dimensão e posicionamento; somente a segunda etapa acrescenta o indicador circular de carregamento.
+O tema escuro é o padrão inicial. A preferência é carregada antes da saída da Splash e persistida localmente. A Splash nativa apresenta somente o fundo `#0B0F14`; em seguida, a tela de Splash do React Native exibe `assets/images/splash.png` em tela cheia com o indicador circular de carregamento. Essa separação evita o logotipo reduzido imposto pela Splash nativa do Android.
 
 ### Tema escuro
 
