@@ -241,3 +241,33 @@ https://github.com/V1-AndreFlores/coruja-app
 3. validar o fluxo completo em Android;
 4. revisar acessibilidade, estados offline, tratamento de cache e desempenho;
 5. revisar a política de privacidade publicada e preparar o AAB.
+
+## Otimização Android de produção
+
+O perfil `production` ativa otimização nativa somente nos builds Android de release:
+
+- R8 para minificação, otimização e ofuscação;
+- remoção de código Java/Kotlin não utilizado;
+- remoção de recursos Android não utilizados;
+- geração do `mapping.txt`;
+- inclusão automática do mapeamento de desofuscação no Android App Bundle.
+
+A configuração é aplicada por `app.config.js` somente quando o perfil EAS define:
+
+```text
+ENABLE_ANDROID_RELEASE_OPTIMIZATION=true
+```
+
+Os perfis `development` e `preview` permanecem sem R8 e sem redução de recursos para facilitar diagnóstico e testes.
+
+Build de produção otimizado:
+
+```bash
+eas build -p android --profile production
+```
+
+Antes de publicar, instale e valide o artefato otimizado em dispositivo físico. Não devem ser adicionadas regras em `extraProguardRules` sem uma falha concreta de build ou execução que justifique a exceção.
+
+## Referência permanente do projeto
+
+Além da estrutura técnica, consulte [`docs/PROJECT_REFERENCE.md`](docs/PROJECT_REFERENCE.md) antes de novas alterações. Esse documento registra funcionalidades, integrações, invariantes, configuração de produção e checklist de atualização.

@@ -319,3 +319,50 @@ A tela consulta as quantidades de Favoritos, Quero assistir e histórico. Cada c
 3. validar responsividade e navegação em Android;
 4. revisar acessibilidade, estados offline e desempenho;
 5. revisar privacidade, EAS e publicação.
+
+## Otimização do build Android de produção
+
+A compilação Android de produção utiliza otimização e ofuscação nativas:
+
+- dependência `expo-build-properties` na versão `57.0.3`;
+- `enableMinifyInReleaseBuilds: true`, ativando o R8 nos builds Android de release;
+- `enableShrinkResourcesInReleaseBuilds: true`, removendo recursos Android não utilizados;
+- remoção de código Java/Kotlin não utilizado durante a otimização;
+- geração do arquivo de desofuscação `mapping.txt`;
+- inclusão automática do arquivo de mapeamento no Android App Bundle;
+- configuração aplicada somente quando `ENABLE_ANDROID_RELEASE_OPTIMIZATION=true`.
+
+A seleção é feita por configuração dinâmica:
+
+- `app.config.js` remove qualquer configuração duplicada de `expo-build-properties` e adiciona o plugin somente quando o sinalizador de produção está ativo;
+- `eas.json` define `ENABLE_ANDROID_RELEASE_OPTIMIZATION=true` apenas no perfil `production`;
+- `development` e `preview` permanecem sem minificação e sem redução de recursos;
+- `cli.appVersionSource` permanece como `remote`;
+- `build.production.autoIncrement` permanece como `true`;
+- `build.production.android.buildType` permanece como `app-bundle`.
+
+A alteração é nativa e exige um novo build EAS. O artefato de produção deve ser testado em dispositivo físico antes do envio ao Google Play, com foco em Splash, navegação, integração com o TMDB, filtros, armazenamento local, abertura de links externos e temas.
+
+Se uma biblioteca nativa utilizar reflexão ou carregamento dinâmico incompatível com o R8, regras adicionais poderão ser necessárias. Não devem ser adicionadas regras preventivas em `extraProguardRules` sem evidência de falha no build ou em execução.
+
+Comando de produção:
+
+```bash
+eas build -p android --profile production
+```
+
+Consultar o `versionCode` remoto:
+
+```bash
+eas build:version:get -p android -e production
+```
+
+Definir ou sincronizar o `versionCode`, quando necessário:
+
+```bash
+eas build:version:set -p android -e production
+```
+
+## Documentação permanente
+
+O arquivo [`PROJECT_REFERENCE.md`](PROJECT_REFERENCE.md) complementa este documento e deve ser atualizado em toda alteração funcional, estrutural, nativa ou relacionada à publicação.

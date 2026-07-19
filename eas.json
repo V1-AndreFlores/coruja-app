@@ -16,6 +16,10 @@
     },
     "production": {
       "autoIncrement": true,
+      "environment": "production",
+      "env": {
+        "ENABLE_ANDROID_RELEASE_OPTIMIZATION": "true"
+      },
       "android": {
         "buildType": "app-bundle"
       }
